@@ -1,0 +1,18 @@
+
+OpenMAX IL - 不翻译
+API - 不翻译
+Buffer - 不翻译（缓冲区，推荐不翻译）
+Flush - 不翻译（冲刷？推荐不翻译）
+
+
+
+setup - 安装
+teardown - 卸载
+
+
+Component - 组件
+Client - 客户端
+Port - 端口
+Callbacks - 回调函数
+Tunneled - 隧道化
+Payload - 负载

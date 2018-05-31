@@ -1,0 +1,36 @@
+
+2 OpenMAX IL Introduction and Architecture
+2 OpenMAX IL 介绍与架构
+
+This section of the document describes the OpenMAX IL features and architecture.
+文档的这一部分描述了OpenMAX IL的特性与架构。
+
+2.1 OpenMAX IL Description
+2.1 OpenMAX IL 简介
+
+The OpenMAX IL layer is an API that defines a software interface used to provide an access layer around software components in a system. The intent of the software interface is to take components with disparate initialization and command methodologies and provide a software layer that has a standardized command set and a standardized methodology for construction and destruction of the components.
+OpenMAX IL层是一系列的软件接口，用于在系统中提供一个围绕软件组件的访问层。软件接口的目的是为组件提供不同的初始化和命令方法，并提供一个软件层，该层具有标准化的命令集和用于构建和销毁组件的标准化方法。
+
+
+2.1.1 Architectural Overview
+2.1.1 架构概述
+
+Consider a system that requires the implementation of four multimedia processing functions denoted as F1, F2, F3, and F4. Each of these functions may be from different vendors or may be developed in house but by different groups within the organization. Each may have different requirements for setup and teardown. Each may have different methods of facilitating configuration and data transfer. The OpenMAX IL API provides a means of encapsulating these functions, singly or in logical groups, into components. The API includes a standard protocol that enables compliant components that are potentially from different vendors/groups to exchange data with one another and be used interchangeably.
+假想一个多媒体系统，需要实现其中4个多媒体处理功能，如F1，F2，F3和F4。 这些功能中的每一个都可能来自于不同的供应商，或者可能由内部开发，但由不同团体开发。 每个对于安装和卸载都有不同的要求或者每个又可能使用不同的方法来促进配置和进行数据传输。 OpenMAX IL API提供了将这些功能（单独或逻辑组）封装到组件中的方法。 该API包含一个标准协议，它能够使潜在的来自不同供应商的组件相互交换数据并可互换使用。
+
+
+
+The OpenMAX IL API interfaces with a higher-level entity denoted as the IL client, which is typically a functional piece of a filter graph multimedia framework, OpenMAX AL, or an application. The IL client interacts with a centralized IL entity called the core. The IL client uses the OpenMAX IL core for loading and unloading components, setting up direct communication between two OpenMAX IL components, and accessing the component’s methods.
+An IL client always communicates with a component via the IL core. In most cases, this communication equates to calling one of the IL core’s macros, which translates directly to a call on one of the component methods. Exceptions (where the IL client calls an actual core function that works) include component creation and destruction, queries about installed components and the roles they support, and connection via tunneling of two components.
+
+
+Components embody the media processing function or functions. Although this specification clearly defines the functionality of the OpenMAX IL core, the component provider defines the functionality of a given component. Components operate on four types of data that are defined according to the parameter structures that they export: audio, video, image, and other (e.g., time data for synchronization).
+An OpenMAX IL component provides access to a standard set of component functions via its component handle. These functions allow a client to get and set component and port configuration parameters, get and set the state of the component, send commands to the component, receive event notifications, allocate buffers, establish communications with a single component port, and establish communication between two component ports.
+Every OpenMAX IL component shall have at least one port to claim OpenMAX IL conformance. Although a vendor may provide an OpenMAX IL-compatible component without ports, the bulk of conformance testing is dependent on at least one conformant port. The four types of ports defined in OpenMAX IL correspond to the types of data a port may transfer: audio, video, and image data ports, and other ports. Each port is defined as either an input or output depending on whether it consumes or produces buffers.
+In a system containing four multimedia processing functions F1, F2, F3, and F4, a system implementer might provide a standard OpenMAX IL interface for each of the functions.
+The implementer might just as easily choose any combination of functions. The delineation for the separation of this functionality is based on ports. Figure 2-1 shows a few possible partitions for an OpenMAX IL implementation that provides these functions.
+
+Figure 2-1. Possible Partitions for an OpenMAX IL Implementation
+
+
+
