@@ -9,28 +9,595 @@ This section of the document describes the OpenMAX IL features and architecture.
 2.1 OpenMAX IL 简介
 
 The OpenMAX IL layer is an API that defines a software interface used to provide an access layer around software components in a system. The intent of the software interface is to take components with disparate initialization and command methodologies and provide a software layer that has a standardized command set and a standardized methodology for construction and destruction of the components.
-OpenMAX IL层是一系列的软件接口，用于在系统中提供一个围绕软件组件的访问层。软件接口的目的是为组件提供不同的初始化和命令方法，并提供一个软件层，该层具有标准化的命令集和用于构建和销毁组件的标准化方法。
+OpenMAX IL层是一系列的软件接口，用于在系统中提供一个基于软件组件的访问层。软件接口的作用是为组件提供不同的初始化和命令方法，并提供一个具有标准化的命令集和组件构建/销毁方法的软件层。
+
 
 
 2.1.1 Architectural Overview
 2.1.1 架构概述
 
 Consider a system that requires the implementation of four multimedia processing functions denoted as F1, F2, F3, and F4. Each of these functions may be from different vendors or may be developed in house but by different groups within the organization. Each may have different requirements for setup and teardown. Each may have different methods of facilitating configuration and data transfer. The OpenMAX IL API provides a means of encapsulating these functions, singly or in logical groups, into components. The API includes a standard protocol that enables compliant components that are potentially from different vendors/groups to exchange data with one another and be used interchangeably.
-假想一个多媒体系统，需要实现其中4个多媒体处理功能，如F1，F2，F3和F4。 这些功能中的每一个都可能来自于不同的供应商，或者可能由内部开发，但由不同团体开发。 每个对于安装和卸载都有不同的要求或者每个又可能使用不同的方法来促进配置和进行数据传输。 OpenMAX IL API提供了将这些功能（单独或逻辑组）封装到组件中的方法。 该API包含一个标准协议，它能够使潜在的来自不同供应商的组件相互交换数据并可互换使用。
-
-
+假想一个多媒体系统，它需要实现4个多媒体处理功能，标记为F1，F2，F3和F4。这些功能中每一个的实现都可能来自于不同的供应商，或者由组织内部不同的团体研发。每个功能对于安装和卸载都有不同的要求，每个功能又可能需要使用不同的方法来进行配置和数据传输。OpenMAX IL API提供了将这些功能（单独或以逻辑组的方式）封装到组件中的方法。该API中包含一个标准协议，它能够使来自不同供应商的组件相互交换数据并可互换使用。
 
 The OpenMAX IL API interfaces with a higher-level entity denoted as the IL client, which is typically a functional piece of a filter graph multimedia framework, OpenMAX AL, or an application. The IL client interacts with a centralized IL entity called the core. The IL client uses the OpenMAX IL core for loading and unloading components, setting up direct communication between two OpenMAX IL components, and accessing the component’s methods.
-An IL client always communicates with a component via the IL core. In most cases, this communication equates to calling one of the IL core’s macros, which translates directly to a call on one of the component methods. Exceptions (where the IL client calls an actual core function that works) include component creation and destruction, queries about installed components and the roles they support, and connection via tunneling of two components.
+OpenMAX IL API与一个称为IL 客户端的更高层次的实体进行交互，该实体通常可能为图形多媒体框架的部分功能、OpenMAX AL或一个应用程序。IL客户端与OMX的核心进行交互，该核心称为Core。IL客户端通过使用OpenMAX IL Core来进行组件的加载和卸载操作，设置两个OpenMAX IL组件间的直接通信以及访问组件的方法。
 
+An IL client always communicates with a component via the IL core. In most cases, this communication equates to calling one of the IL core’s macros, which translates directly to a call on one of the component methods. Exceptions (where the IL client calls an actual core function that works) include component creation and destruction, queries about installed components and the roles they support, and connection via tunneling of two components.
+IL客户端通常通过IL Core来与组件进行通信。在大多数情况下，这种通信就是通过调用IL Core提供的某一个宏，这些宏最后直接转换为对应组件的方法。例外情况是IL客户端会调用可以实际工作的Core函数，这些函数包括组件的创建和销毁，已安装组件的查询，已安装组件所支持的role，两个组件的隧道化连接等等。
 
 Components embody the media processing function or functions. Although this specification clearly defines the functionality of the OpenMAX IL core, the component provider defines the functionality of a given component. Components operate on four types of data that are defined according to the parameter structures that they export: audio, video, image, and other (e.g., time data for synchronization).
+
+组件体现了多媒体的处理功能。虽然本规范中明确定义了OpenMAX IL Core的功能，但组件的提供者定义组件的功能。组件根据它们导出的参数结构（音频，视频，图像和其他（例如用于同步的时间数据））对四种类型的数据进行操作。
+
+
+
+
+
+
 An OpenMAX IL component provides access to a standard set of component functions via its component handle. These functions allow a client to get and set component and port configuration parameters, get and set the state of the component, send commands to the component, receive event notifications, allocate buffers, establish communications with a single component port, and establish communication between two component ports.
+OpenMAX IL组件通过其句柄提供出一组对其功能进行访问的标准函数。 这些函数允许客户端获取和设置组件，对端口进行参数配置，获取并设置组件的状态，向组件发送命令，接收事件通知，分配缓冲区，与组件的单个端口建立通信，以及与组件的两个端口建立通信。
+
 Every OpenMAX IL component shall have at least one port to claim OpenMAX IL conformance. Although a vendor may provide an OpenMAX IL-compatible component without ports, the bulk of conformance testing is dependent on at least one conformant port. The four types of ports defined in OpenMAX IL correspond to the types of data a port may transfer: audio, video, and image data ports, and other ports. Each port is defined as either an input or output depending on whether it consumes or produces buffers.
-In a system containing four multimedia processing functions F1, F2, F3, and F4, a system implementer might provide a standard OpenMAX IL interface for each of the functions.
-The implementer might just as easily choose any combination of functions. The delineation for the separation of this functionality is based on ports. Figure 2-1 shows a few possible partitions for an OpenMAX IL implementation that provides these functions.
+每个OpenMAX IL组件都应至少有一个端口来声明OpenMAX IL一致性。虽然供应商可能提供不带端口的OpenMAX IL兼容组件，但大部分一致性测试依赖于至少一个一致性端口。OpenMAX IL中定义的四种类型的端口对应于端口可以传输的数据类型：音频，视频，图像数据端口以及其他端口。 根据端口是否消耗或产生缓冲区，每个端口又被定义为输入端口或输出端口。
+
+In a system containing four multimedia processing functions F1, F2, F3, and F4, a system implementer might provide a standard OpenMAX IL interface for each of the functions. The implementer might just as easily choose any combination of functions. The delineation for the separation of this functionality is based on ports. Figure 2-1 shows a few possible partitions for an OpenMAX IL implementation that provides these functions.
+在包含四个多媒体处理功能F1，F2，F3和F4的系统中，系统实施者可以为每个功能提供标准的OpenMAX IL接口。 实施者只需要选择一些功能的组合。 功能的划分基于端口。 图2-1显示了OpenMAX IL实施者对于这些功能的一些可能分区。
 
 Figure 2-1. Possible Partitions for an OpenMAX IL Implementation
+图2-1. OpenMAX IL实现的对于功能的一些可能分区
+
+
+
+
+
+
+2.1.2 Key Vocabulary
+2.1.2 核心词汇
+This section describes acronyms and definitions commonly used in describing the OpenMAX IL API.
+本节介绍OpenMAX IL API中常使用的首字母缩略词和术语。
+
+2.1.2.1 Key Definitions
+2.1.2.1 关键术语
+Table 2-1 lists key definitions used in describing the OpenMAX IL API.
+表2-1列出了描述OpenMAX IL API中使用的关键术语
+Table 2-1: Key Definitions
+表2-1：关键术语
+Accelerated component
+加速组件
+OpenMAX IL components that wrap a function with a portion running on an accelerator.
+一种OpenMAX IL组件，它包含一个功能并且部分运行在加速器上。
+Accelerator
+加速器
+Hardware designed to speed up processing of some functions. This hardware may also be referred to as accelerated hardware. Note that the accelerator may actually be software running in a different processor and not be hardware at all.
+设计出来的用于加速某些功能的硬件，这个硬件也可以被称为加速硬件。需要注意的是，加速器实际上可能是运行在另一个处理器上的软件，根本不是硬件。
+
+Buffer Supplier
+缓冲区提供者
+The entity that “owns” the buffer passed into a port.
+传入一个端口的缓冲区的实际“拥有者”
+Container
+容器
+A format for encapsulating elementary streams of data and associated metadata (e.g. the 3gp file format).
+用于封装基本数据流和相关元数据的格式（例如3gp文件格式）。
+
+Content Pipe
+内容管道
+The abstraction of a means to access (read or write) some content external to OpenMAX IL. Content may manifest itself as a file and a pipe may leverage system file i/o functions, but the abstraction is not limited to these particular types of content or content access.
+访问（读取或写入）OpenMAX IL外部某些内容的一种抽象方法。外部的内容可以表现为一个文件或者可以利用系统文件I/O功能的管道，但抽象不限于这些特定类型的内容或内容访问。
+
+Component Group
+组件组
+A group of components that are functionally dependent upon one another. If one component of a group is inoperable then all components in a group are inoperable.
+一组功能上相互依赖的组件。 如果组中的某一个组件无法操作，那么该组中的所有组件都无法运行。
+Component Suspension
+组件挂起
+A component is suspended when it lacks a critical resource but holds all other resources so that, if and when the required resource is again available, that component may resume from the point of suspension.
+一个组件在缺少关键资源时，暂时挂起其拥有的其他资源，以便在所需资源再次可用时，该组件可以从挂起点恢复。
+
+Dynamic resources
+动态资源
+Any component resources that are allocated after the initial transition to the idle state. Dynamic resource allocation is discouraged and should only occur when the parameters of the allocation (e.g. the size or number of internal memory buffers) is not known at the preferred times to allocate resources.
+任何一个组件资源是在该组件从初始状态转换到Idle状态时进行分配的。动态资源分配是不推荐的，只有在分配参数（例如，内部缓冲区的大小或数量）在组件资源分配的优选时间内未知时，才会选择动态资源分配。
+Host processor
+主处理器
+The processor in a multi-core system that controls media acceleration and typically runs a high-level operating system.
+多核系统中控制媒体加速，并且通常运行高级操作系统的那个处理器。
+IL client
+IL 客户端
+The layer of software that invokes the methods of the core or component. The IL client may be a layer below the GUI application, such as GStreamer, or may be several layers below the GUI layer. In this document, the application refers to any software that invokes the OpenMAX IL methods.
+调用OMX Core或者组件方法的软件层。IL客户端可能是位于GUI应用程序下面的软件层，如GStreamer，或者可能位于GUI层下面的几层。在本文档中，应用程序是指任何调用OpenMAX IL方法的软件。
+
+Main memory
+主存储器/主内存
+Typically external memory that the host processor and the accelerator share.
+通常是主处理器和加速器共享的外部存储器。
+OpenMAX IL component
+OpenMAX IL 组件
+A component that is intended to wrap functionality that is required in the target system. The OpenMAX IL wrapper provides a standard interface for the function being wrapped.
+OpenMAX IL 组件的目的是包含目标系统中所需的功能，OpenMAX IL wrapper为被封装的函数提供标准接口。
+
+OpenMAX IL core
+OpenMAX IL 内核
+Platform-specific code that has the functionality necessary to locate and then load an OpenMAX IL component into main memory. The core also is responsible for unloading the component from memory when the application indicates that the component is no longer needed.
+特定于平台的代码，并且具有找到和将OpenMAX IL组件加载到主内存中的功能。当应用程序指出不再需要一个OpenMAX IL组件时，OpenMAX IL core还需要负责从内存卸载组件。
+
+In general, after the OpenMAX IL core loads a component into memory, the core will not participate in communication between the application and the component.
+通常来讲，在OpenMAX IL Core将组件加载到内存后，Core将不参与应用程序与组件之间的通信。
+
+Resource manager
+资源管理器
+A software entity that manages hardware resources in the system.
+管理系统中硬件资源的软件实体。
+Static resources
+静态资源
+Component resources that are allocated as a prerequisite to entering the idle state. Most component resources fall into this category.
+作为组件进入Idle状态的先决条件分配的组件资源，大多数组件资源都属于这个类别。
+
+Synchronization
+同步
+A mechanism for gating the operation of one component with another.
+门控一个组件与另一个组件操作的机制。
+Tunnels/Tunneling
+隧道/隧道化
+The establishment and use of a standard data path that is managed directly between two OpenMAX IL components.
+建立在两个OpenMAX IL组件之间直接进行标准数据通信的路径。
+
+
+2.1.3 System Components
+2.1.3 系统组件
+Figure 2-2 depicts the various types of communication enabled with OpenMAX IL. Each component can have an arbitrary number of ports for data communication. Components with a single output port are referred to as source components. Components with a single input port are referred to as sink components. Components running entirely on the host processor are referred to as host components. Components running on a loosely coupled accelerator are referred to as accelerator components. OpenMAX IL may be integrated directly with an application or may be integrated with multimedia framework components enabling heterogeneous implementations.
+图2-2描述了OpenMAX IL的各种通信类型。每个组件可以有任意数量的端口用于数据通信。带有单个输出端口的组件称为源组件。具有单个输入端口的组件被称为接收器组件。完全在主处理器上运行的组件称为主机组件。运行在松耦合加速器上的组件称为加速器组件。OpenMAX IL可以直接与应用程序集成，也可以与支持异构实现的多媒体框架组件集成。
+
+
+
+Three types of communication are described. Non-tunneled communications defines a mechanism for exchanging data buffers between the IL client and a component. Tunneling defines a standard mechanism for components to exchange data buffers directly with each other in a standard way. Proprietary communication describes a proprietary mechanism for direct data communications between two components and may be used as an alternative when a tunneling request is made, provided both components are capable of doing so.
+
+这里描述了三种类型的通信。非隧道通信是指在IL客户端和组件之间交换数据缓冲区的机制。隧道通信是指组件间以标准方式直接交换数据缓冲区的机制。专有通信是指用于两个组件之间的直接数据通信，并可以在收到隧道请求时用其替代，只要这两个组件都能够允许这么做。
+
+Figure 2-2. OpenMAX IL API System Components
+图2-2. OpenMAX IL API 系统组件
+
+
+2.1.3.1 Component Profiles
+2.1.3.1 配置组件
+
+OpenMAX IL component functionality is grouped into two profiles: base profile and interop profile.
+OpenMAX IL组件按照功能可以区分为两组配置组件：基本配置组件和交互配置组件。
+
+
+The base profile shall support non-tunneled communication. Base profile components may support proprietary communication. Base profile components do not support tunneled communication.
+基本配置组件应支持非隧道通信。 基本配置组件可支持专有通信。 基本配置组件不支持隧道通信。
+
+The interop profile is a superset of the base profile. An interop profile component shall support non-tunneled communication and tunneled communication. An interop profile component may support proprietary communication.
+交互配置组件是基本配置组件的超集。交互配置组件应支持非隧道通信和隧道通信。一个交互配置组件可以支持专有通信。
+
+
+The primary difference between the interop profile and the base profile is that the component supports tunneled communication. The base profile exists to reduce the adoption barrier for OpenMAX IL implementers by simplifying the implementation. A base profile component does not need to implement tunneled communication.
+交互配置组件和基本配置组件的主要区别在于该组件是否支持隧道通信。基本配置组件的存在旨在简化OpenMAX IL实施者的实现难度,因为基本配置组件不需要实现隧道通信。
+
+Table 2-2: Types of Communication Supported Per Component Profile
+表2-2：每个配置组件支持的通信类型
+
+
+
+2.1.4 Component States
+2.1.4 组件状态
+
+Each OpenMAX IL component can undergo a series of state transitions, as depicted in Figure 2-3. Every component is first considered to be unloaded. The component shall be loaded through a call to the OpenMAX IL core. All other state transitions may then be achieved by communicating directly with the component.
+每个OpenMAX IL组件都可以经历一系列状态转换，如图2-3所示，每个组件的状态首先被认为Unloaded的。组件应通过调用OpenMAX IL Core的一个函数来加载，其他所有状态转换可以通过直接与组件通信来实现。
+
+
+
+A component can enter an invalid state when a state transition is made with invalid data. For example, if the callback pointers are not set to valid locations, the component may time out and alert the IL client of the error. The IL client shall stop, de-initialize, unload, and reload the component when the IL client detects an invalid state. Figure 2-3 depicts the invalid state as enterable from any state, although the only way to exit the invalid state is to unload and reload the component.
+当一个组件在进行状态转换时由于操作了无效数据，就可能会进入Invalid状态。例如，如果回调函数的指针未设置为有效位置，组件可能会超时并向IL客户端发出错误警报。IL客户端应在检测到无效状态时停止，反初始化，卸载和重新加载组件。如图2-3中描述的，Invalid状态可从任何状态进入，但退出Invalid状态的唯一方法是卸载并重新加载组件。
+
+Figure 2-3. Component States
+图 2-3. 组件状态
+
+
+
+In general, the component shall have all its operational resources when in the IDLE state. There are, however, exceptions when the parameters for the resource allocation are not known at the time of the transition to IDLE. For example, a component that decodes video does not know how many reference frames are required until the data stream is examined yet the component cannot examine the stream prior to transition to IDLE. In these cases the component may defer the allocation of resources until such time as it knows the parameters of allocation. If dynamic allocation fails the component shall suspend itself. Thus we often distinguish between those resources allocated “up front” (e.g. on a transition to IDLE) and those allocated later by calling the former static resources and the latter dynamic resources.
+通常情况下，组件在IDLE状态时应具有所有可操作的资源。但是，例外情况是，在转换为IDLE状态时，资源分配的参数尚未知道。例如，解码视频的组件在数据流被检查前，是不知道需要多少参考帧的，然而组件在转换为IDLE状态之前无法检查流。在这种情况下，组件可能会推迟分配资源，直到知道分配参数为止。如果动态分配失败，组件应挂起它自己。因此，我们经常区分这两种资源，例如，向IDLE过渡前“先期”分配的资源为静态分配的资源，稍后通过调用而获得的资源称为动态分配的资源。
+
+
+
+
+Transitioning into the IDLE state may fail since this state requires allocation of all operational static resources. When the transition from LOADED to IDLE fails, the IL client may try again or may choose to put the component into the WAIT FOR RESOURCES state. Upon entering the WAIT FOR RESOURCE state, the component registers with a vendor-specific resource manager to alert it when resources have become available. The component will subsequently transition into the IDLE state. A command that the IL client sends controls all other state transitions except to INVALID.
+转换到IDLE状态时可能会失败，因为此状态需要分配所有可操作的静态资源。当从LOADED到IDLE的状态转换失败时，IL客户端可能会再次尝试或选择将该组件置于WAIT FOR RESOURCES状态。进入WAIT FOR RESOURCE状态后，组件向特定于供应商的资源管理器注册，以便于在资源可用时向其发出警报，该组件将随后转换到IDLE状态。IL客户端可以在除INVALID以外的所有其他状态下发送控制命令。
+
+
+The IDLE state indicates that the component has all of its needed static resources but is not processing data. The EXECUTING state indicates that the component is pending reception of buffers to process data and will make required callbacks as specified in section 3. The PAUSED state maintains a context of buffer execution with the component without processing data or exchanging buffers. Transitioning from PAUSED to EXECUTING enables buffer processing to resume where the component left off. Transitioning from EXECUTING or PAUSED to IDLE will cause the context in which buffers were processed to be lost, which requires the start of a stream to be reintroduced. Transitioning from IDLE to LOADED will cause operational resources such as communication buffers to be lost.
+IDLE状态表示组件具有其所需的全部静态资源，但不处理数据。EXECUTING状态表示组件正在等待接收buffers来处理数据，并将按照第3章的规定来进行必要的回调。PAUSED状态保持组件与buffers执行过程的上下文，而不处理数据或交换buffers。从PAUSED状态转换到EXECUTING状态，组件从停止的地方恢复执行对buffer的处理。从EXECUTING或PAUSED转换到IDLE将会导致处理buffers过程的上下文丢失，需要重新引入流。从IDLE转换到LOADED会导致操作资源（如通讯缓冲区）丢失。
+
+
+2.1.5 Component Architecture
+2.1.5 组件架构
+Figure 2-4 depicts the component architecture. Note that there is only one entry point for the component (through its handle to an array of standard functions) but there are multiple possible outgoing calls that depend on how many ports the component has. Each component will make calls to a specified IL client event handler. Each port will also make calls (or callbacks) to a specified external function. A queue for pointers to buffer headers is also associated with each port. These buffer headers point to the actual buffers. The command function also has a queue for commands. All parameter or configuration calls are performed on a particular index and include a structure associated with that parameter or configuration, as depicted in Figure 2-4.
+
+图2-4描述了组件的体系架构。请注意，每个组件只有一个入口（通过组件的句柄而引出的一系列标准函数数组），但可能有多个回调函数取决于组件的端口数。每个组件都将调用指定的IL客户端事件处理程序，每个端口也会对指定的外部函数进行调用（或回调）。指向buffer头部的指针队列也与每个端口相关联,这些buffer头指向实际的buffer。命令函数也有一个命令队列。所有参数或配置调用都在特定的索引上执行，并包含与该参数或配置相关的结构体，如图2-4所示。
+
+Figure 2-4. OpenMAX IL API Component Architecture
+图 2-4. OpenMAX IL API 组件架构
+
+A port shall support callbacks to the IL client and, when part of an interop profile component, shall support communication with ports on other components.
+一个端口应该支持对IL客户端的回调，并且当它为交互配置组件的一部分时，应该支持与其他组件上的端口通信。
+
+
+2.1.6 Communication Behavior
+2.1.6 沟通行为
+
+Configuration of a component may be accomplished once the handle to the component has been received from the OpenMAX IL core. Data communication calls with a component are non-blocking and are enabled once the number of ports has been configured, each port has been configured for a specific data format, and the component has been put in the appropriate state. Data communication is specific to a port of the component. Input ports are always called from the IL client with OMX_EmptyThisBuffer (for more information, see section 3.2.2.17). Output ports are always called from the IL client with OMX_FillThisBuffer (for more information, see section 3.2.2.18). In an in-context implementation, callbacks to EmptyBufferDone or FillBufferDone will be made before the return. Figure 2-5 depicts the anticipated behavior for an in-context versus an out-of-context implementation. Note that the IL client should not make assumptions about return/callback sequences to enable heterogeneous integration of in-context and out-ofcontext OpenMAX IL components.
+
+一旦从OpenMAX IL Core接收到组件的句柄，就完成了对组件的配置。组件的数据通信调用是非阻塞的，并且当配置了端口数量，每个端口配置为特定的数据格式，该组件处于适当的状态时，数据通信就开始使能。数据通信特定于组件的端口。输入端口总是通过OMX_EmptyThisBuffer函数从IL客户端调用（有关更多信息，请参见第3.2.2.17节），输出端口总是通过OMX_FillThisBuffer从IL客户端调用（有关更多信息，请参见第3.2.2.18节）。在in-context实现中，将在返回之前调用EmptyBufferDone或FillBufferDone回调函数。图2-5描述了在in-context与out-of-context实现的预期行为。请注意，IL客户端不应该对返回/回调序列进行假设，以启用in-context和out-of-context OpenMAX IL组件的异构集成。
+（注： 当OpenMAX组件与应用程序处于同一个进程/线程中时，称为in-context，反之，当它们不在同一个进程/线程中时，称为out-of-context）
+
+
+Figure 2-5. Out-of-Context versus In-Context Operation
+图 2-5. Out-of-Context VS In-Context 操作
+
+
+Data communications with components is always directed to a specific component port. Each port has a component-defined minimum number of buffers it shall allocate or use. A port associates a buffer header with each buffer. A buffer header references data in the buffer and provides metadata associated with the contents of the buffer. Every component port shall be capable of allocating its own buffers or using pre-allocated buffers; one of these choices will usually be more efficient than the other.
+与组件的数据通信始终指向特定的组件端口。每个端口都有一个组件规定的分配或使用buffer的最少数量。每个端口通过缓冲区头部来把所有缓冲区关联起来，缓冲区头部引用缓冲区中的数据并提供与缓冲区内容相关的元数据。每个端口应能够分配自己的缓冲区或使用预先分配的缓冲区;通常会选择其中一种最有效率的方式。
+
+2.1.7 Tunneled Buffer Allocation
+2.1.7 隧道缓冲区分配
+
+This section describes buffer allocation for tunneling components. For a given tunnel, exactly one port supplies the buffers and passes those buffers to the non-supplier port. Normally the supplier port of a tunnel also allocates the buffers. Under the right circumstances, however, a tunneling component may choose to re-use buffers from one port on another to avoid memory copies and optimize memory usage. This optional practice, known as buffer sharing is described in detail in Section 10—Implementing Buffer Sharing..
+本节介绍隧道化组件的缓冲区分配。对于给定的隧道，只有一个端口提供缓冲区并将这些缓冲区传递给其他端口。通常，隧道的buffer供应端口也会分配缓冲区。但是，在正确的情况下，隧道组件可能会选择再使用其他端口的buffer，以避免内存拷贝并优化内存使用。这个可选的方法，称为内存共享，在第10节 -实现缓冲区共享中有详细描述。
+
+Figure 2-6 illustrates the concepts relevant to tunneled buffer allocation.
+图2-6说明了与隧道缓冲区分配相关的概念。
+
+Figure 2-6. Example of Buffer Allocation and Sharing Relationships
+图2-6 缓冲区分配和共享关系示例
+
+Among a pair of ports that are tunneling, the port that calls UseBuffer on its neighbor is known as a supplier port. A buffer supplier port does not necessarily allocate its buffers; it may re-use buffer from another port on the same component. Ports a and c in Figure 2-6 illustrate supplier ports.
+在这些处于隧道中的端口中，调用UseBuffer的来向其邻居端口传递buffer的端口被称为供应端口。供应端口不一定分配缓冲区，它可能会从同一个组件的另一个端口上再使用缓冲区。图2-6中的端口a和c说明了供应端口。
+
+The port that receives the UseBuffer calls from its neighbor is known as a nonsupplier port. Ports b and d Figure 2-6 illustrate non-supplier ports.
+接收来自其邻居UseBuffer调用的端口称为非供应端口。 端口b和d图2-6显示了非供应商端口。
+
+A port’s tunneling port is the port neighboring it with which it shares a tunnel. For example, port b in Figure 2-6 is the tunneling port to port a. Likewise, port a is the tunneling port to port b.
+端口的隧道端口是与之共享隧道的端口。例如，图2-6中的端口b是端口a的隧道端口。同样，端口a是端口b的隧道端口。
+
+An allocator port is a supplier port that also allocates its own buffers. Port a in Figure 2-6 is the only allocator port.
+分配器端口也会为其自己分配缓冲区。 图2-6中的端口a是唯一的分配器端口。
+
+A sharing port is a port that re-uses buffers from another port on the same component. For example, port c in Figure 2-6 is a sharing port.
+共享端口是再使用同一组件上另一个端口缓冲区的端口。 例如，图2-6中的端口c是共享端口。
+
+A tunneling component is a component that uses at least one tunnel.
+隧道组件是使用至少一个隧道的组件。
+
+The set of buffer requirements for a port includes the number of buffers required and the required size of each buffer. The maximum of multiple sets of buffer requirements is defined as the largest number of buffers mandated in any set combined with the largest size mandated in any set. One port retrieves buffer requirements from its tunneled port in a OMX_PARAM_PORTDEFINITIONTYPE structure via an OMX_GetParameter call on the tunneled port's component. Note that one port may determine buffer requirements from a port that shares its buffers without resorting to an OMX_GetParameter call since they are both contained in the same component.
+端口所需的一组缓冲区信息包括缓冲区数量和每个缓冲区所需的大小。如果需要多组缓冲区的话，缓冲区的最大数量和大小，是这些组中的最大值。一个端口通过OMX_GetParameter函数来从它的隧道端口上检索缓冲区要求，检索到的数据保存在OMX_PARAM_PORTDEFINITIONTYPE结构体中。需要注意的是，一个端口可能会从共享其缓冲区的端口来确定其缓冲区要求，而不使用OMX_GetParameter调用，因为它们都包含在同一个组件中。
+
+
+Regardless of whether the component is sharing buffers or not, it is obligated to obey the following external semantics:
+无论组件是否共享缓冲区，它都有义务遵守以下外部语义：
+•Provide buffers on all of its supplier ports.
+• 在供应商端口上提供缓冲区。
+•Accurately communicate buffer requirements on its ports.
+•准确地传达其端口上的缓冲区要求。
+• Pass a buffer from an output port to an input port with an OMX_EmptyThisBuffer call.
+•使用OMX_EmptyThisBuffer调用将缓冲区从输出端口传递到输入端口。
+• Return a buffer from an input port to an output port with an OMX_FillThisBuffer call.
+•使用OMX_FillThisBuffer调用将缓冲区从输入端口返回到输出端口。
+
+
+
+
+2.1.7.1 IL Client Component Setup
+2.1.7.1 IL客户端组件设置
+To set up tunneling components, the IL client should perform the following setup operations in this order:
+要设置隧道组件，IL客户端应按以下顺序操作：
+1. Load all tunneling components and set up the tunnels on these components.
+1.加载所有隧道组件，并在这些组件上设置隧道。
+2. Command all tunneling components to transition from the loaded state to the idle state.
+2.命令所有隧道组件从LOADED状态转换到IDLE状态。
+
+Note that if an IL client does not operate in this manner when some components are sharing buffers, a tunneling component might never transition to idle because of the possible dependencies between components.
+需要注意的是，如果某些组件在共享缓冲区时IL客户端不以这种方式运行，则由于组件之间可能存在依赖关系，因此隧道组件可能永远不会转换到IDLE状态。
+
+
+2.1.7.2 Component Transition from Loaded to Idle State
+2.1.7.2组件从LOADED状态转换到IDLE状态
+When commanded to transition from loaded to idle, each supplier port of a non-sharing component does the following:
+当组件从LOADED状态转换到IDLE状态时，非共享组件的每个供应商端口执行以下操作：
+1. Determine the buffer requirements of its tunneled port via an OMX_GetParameter call.
+1.通过OMX_GetParameter调用确定隧道端口的缓冲区要求。
+2. Allocate buffers according to the maximum of its own requirements and the requirements of the tunneled port.
+2.按照自己要求和隧道端口要求的最大值分配缓冲区。
+3. Call OMX_UseBuffer on its tunneling port.
+3.在其隧道端口上调用OMX_UseBuffer。
+
+2.1.8 Port Reconnection
+2.1.8 端口重新连接
+Port reconnection enables a tunneled component to be replaced with another tunneled component without having to tear down surrounding components. In Figure 2-7, component B1 is to be replaced with component B2. To do this, the component A output port and the component B input port shall first be disabled with the port disable command. Once all allocated buffers have returned to their rightful owner and freed, the component A output port may be connected to component B2. The component B1 output port and the component C input port should similarly be given the port disable command. After all allocated buffers have returned to their owners and freed, the component C input port may be connected to the component B2 output port. Then all ports may be given the enable command. Refer to Section 3.4.4 Port Disablement and Enablement for additional information regarding port disabling and enabling.
+端口重新连接可使已经隧道化的组件替换为另一个隧道组件，而不必拆除周围的组件。在图2-7中，组件B1将被替换为组件B2。为此，组件A的输出端口和组件B的输入端口应首先使用端口禁用命令禁用，一旦所有分配的缓冲区都返回到其合法所有者并释放后，组件A的输出端口就可以连接到组件B2了。组件B1的输出端口和组件C的输入端口应同样给予端口禁用命令，在所有分配的缓冲区已经返回到其所有者并释放后，组件C输入端口可以连接到组件B2输出端口。然后所有的端口都可以被赋予enable命令。有关端口禁用和启用的更多信息，请参见第3.4.4节“端口禁用和启用”。
+
+
+Figure 2-7. Port Reconnection
+图 2-7. 端口重新连接
+In some cases such as audio, reconnecting one component to another and then fading in data for one component while fading out data for the original component may be desirable. Figure 2-8 illustrates how this would work. In step 1, component A sends data to component B1, which then sends the data on to component C. Components A and C both have an extra port that is disabled. In step 2, the IL client first establishes a tunnel between component A and B2, then establishes a tunnel between B2 and C, and then enables all ports in the two tunnels. Component C may be able to mix data from components B1 and B2 at various gains, assuming that these are audio components. In step 3, the ports connected to component B1 from components A and C are disabled, and component B1 resources may be de-allocated.
+在某些情况下，如音频，可能需要将一个组件重新连接到另一个组件，然后淡入一个新组件的数据，同时淡化原始组件的数据。图2-8说明了这将如何工作。在步骤1中，组件A将数据发送到组件B1，然后组件B1将数据发送到组件C。组件A和C都有一个禁用的额外端口。在步骤2中，IL客户端首先在组件A和B2之间建立隧道，然后在B2和C之间建立隧道，然后启用两个隧道中的所有端口。假定这些是音频组件，组件C可能能够以各种增益混合来自组件B1和B2的数据。在步骤3中，组件A和组件C连接到组件B1的端口被禁用，组件B1的资源可能会被取消分配。
+
+Figure 2-8. Reconnecting Components
+图 2-8. 重新连接组件
+
+2.1.9 Queues and Flush
+2.1.9 队列和Flush
+
+A separate command queue enables the component to flush buffers that have not been processed and return these buffers to the IL client when using non-tunneled communication, or to the tunneled output port when using tunneled communication. For example, assume that a component has an output port that is using buffers allocated by the IL client. In this example, the client sends a series of five buffers to the component before sending the flush command. Upon processing the flush command, the component returns each unprocessed buffer and triggers its event handler to notify the IL client. Two buffers were already processed before the flush command got processed. The component returns the remaining three buffers unfilled and generates an event. The IL client should wait for the event before attempting to de-initialize the component.
+命令队列使组件能够刷新尚未处理的缓冲区，并在使用非隧道通信时将这些缓冲区返回给IL客户端，或者在使用隧道通信时将这些缓冲区返回给隧道输出端口。例如，假定组件的输出端口正在使用由IL客户端分配的缓冲区。 在此示例中，客户端在发送flush命令之前向组件发送五个缓冲区。在处理flush命令后，组件返回尚未处理的缓冲区并触发其事件处理程序来通知IL客户端。在处理flush命令之前，已经处理了两个缓冲区，该组件返回未填充的剩余三个缓冲区并生成一个事件。IL客户端在反初始化组件之前，应该等待事件。
+
+
+2.1.10 Marking Buffers
+2.1.10 标记缓冲区
+An IL client can also trigger an event to be generated when a marked buffer is encountered. A buffer can be marked in its buffer header. The mark is internally transmitted from an input buffer to an output buffer in a chain of OpenMAX IL components. The mark enables a component to send an event to the IL client when the marked buffer is encountered. Figure 2-9 depicts how this works.
+当遇到被标记的缓冲区时，IL客户端也可以触发事件产生。一个缓冲区可以在其buffer header中被标记，该标记buffer在内部通过一系列OpenMAX IL组件从输入缓冲区传输到输出缓冲区。该标记使组件能够在遇到标记的缓冲区时向IL客户端发送事件。 图2-9描述了这是如何工作的。
+
+Figure 2-9. Marking Buffers
+图 2-9. 标记缓冲区
+
+The IL client sends a command to mark a buffer. The next buffer sent from the output port of the component is marked B1. Component B processes the B1 buffer and provides the results in buffer B2 along with the mark. When component C receives the marked buffer B2 through its input port, the component does not trigger its event handler until it has processed the buffer.
+IL客户端发送一个命令来标记缓冲区。从组件的输出端口发送的下一个缓冲区标记为B1。组件B处理B1缓冲区并将结果与标记一起提供给缓冲区B2。当组件C通过其输入端口接收标记的缓冲区B2时，处理该缓冲区，当它处理完后，触发其事件处理程序。
+
+2.1.11 Events and Callbacks
+2.1.11事件和回调函数
+
+Six kinds of events are sent by a component to the IL client:
+组件可以向IL客户端发送六种事件：
+• Error events are enumerated and can occur at any time
+• 错误事件：是一个枚举值并可能随时发生
+• Command complete notification events are triggered upon successful execution of a command.
+• 命令完成通知事件：成功执行命令后会触发命令完成通知事件。
+• Marked buffer events are triggered upon detection of a marked buffer by a component.
+• 标记缓冲区事件：在组件检测到标记缓冲区时触发。
+• A port settings changed notification event is generated when the component changes its port settings.
+• 端口设置更改通知事件：在组件更改端口设置时，会生成端口设置更改通知事件。
+• A buffer flag event is triggered when an end of stream is encountered.
+• 缓冲标志事件：遇到流结束时触发缓冲标志事件。
+• A resources acquired event is generated when a component gets resources that it has been waiting for.
+• 资源获取事件：组件获取到其等待的资源时会生成资源获取事件。
+
+
+Ports make buffer handling callbacks upon availability of a buffer or to indicate that a buffer is needed.
+端口在缓冲区可用时执行缓冲区处理回调函数或指示需要缓冲区。
+
+
+2.1.12 Buffer Payload
+2.1.12 缓冲区负载
+
+The port configuration is used to determine and define the format of the data to be transferred on a component port, but the configuration does not define how that data exists in the buffer.
+端口配置确定和定义数据在组件端口上传输的格式，但并未定义数据在缓冲区中的存放方式。
+
+There are generally three cases that describe how a buffer can be filled with data. Each case presents its own benefits.
+通常有三种情况描述了数据是如何填充在缓冲区中的，每种情况都有其优劣势。
+
+In all cases, the range and location of valid data in a buffer is defined by the pBuffer, nOffset, and nFilledLen parameters of the buffer header. The pBuffer parameter points to the start of the buffer. The nOffset parameter indicates the number of bytes between the start of the buffer and the start of valid data. The nFilledLen parameter specifies the number of contiguous bytes of valid data in the buffer. The valid data in the buffer is therefore located in the range pBuffer + nOffset to pBuffer + nOffset + nFilledLen.
+在所有情况下，缓冲区中有效数据的范围和位置由buffer header中的pBuffer，nOffset和nFilledLen参数定义。pBuffer参数指向缓冲区的开始，nOffset参数指示从缓冲区开始到有效数据开始之间的字节数，nFilledLen参数指定缓冲区中有效数据的连续字节数。 因此，缓冲区中的有效数据位于pBuffer + nOffset到pBuffer + nOffset + nFilledLen的范围内。
+
+The following cases are representative of compressed data in a buffer that is transferred into or out of a component when decoding or encoding. In all cases, the buffer just provides a transport mechanism for the data with no particular requirement on the content. The requirement for the content is defined by the port configuration parameters.
+以下情况代表在解码或编码时传入或传出组件的缓冲区中的压缩数据。在所有情况下，缓冲区仅为数据提供传输机制，对内容没有特别的要求。 内容需求由端口配置参数定义。
+
+
+The shaded portion of the buffer represents data and the white portion denotes no data.
+缓冲区的阴影部分表示数据，白色部分表示没有数据。
+
+Case 1: Each buffer is filled in whole or in part. In the case of buffers containing compressed data frames, the frames are denoted by f1 to fn.
+案例1：每个缓冲区全部或部分填充。 在包含压缩数据帧的缓冲区的情况下，帧由f1至fn表示。
+
+Figure 2-10: Case 1—Each Buffer Filled In Whole or In Part
+图2-10：案例1 - 每个缓冲区全部或部分填充
+Case 1 provides a benefit when decoding for playback. The buffer can accommodate multiple frames and reduce the number of transactions required to buffer an amount of data for decoding. However, this case may require the decoder to parse the data when decoding the frames. It also may require the decoder component to have a frame-building buffer in which to put the parsed data or maintain partial frames that would be completed with the next buffer.
+案例1为解码播放提供了一个好的案例。缓冲区可以容纳多个帧，可以减少缓冲一定数量的解码所需的事务数量。 然而，这种情况可能需要解码器在解码帧时解析数据，它还可能需要解码器组件具有一个以帧为单位建立的缓冲区，在该帧缓冲区中放置解析的数据或保存将在下一个缓冲区才能解析完成的部分帧。
+
+
+Case 2: Each buffer is filled with only complete frames of compressed data.
+案例2：每个缓冲区只填充完整的压缩数据帧。
+Figure 2-11: Case 2—Each Buffer Filled with Only Complete Frames of Data
+图2-11：案例2 - 每个缓冲区中只填充完整的数据帧
+
+Case 2 differs from case 1 because it requires the compressed data to be parsed first so that only complete frames are put in the buffers. Case 2 may also require the decoder component to parse the data for decoding. This case may not require the extra working buffer for parsing frames required in case 1.
+案例2与案例1不同，因为它首先需要解析压缩数据，只有完整的帧才被放入缓冲区。案例2也可能需要解码器组件解析数据以进行解码,这种情况可能不需要额外的工作缓冲区来解析案例1中所需的帧。
+
+Case 3: Each buffer is filled with only one frame of compressed data.
+案例3：每个缓冲区只填充一帧压缩数据。
+Figure 2-12: Case 3—Each Buffer Filled with Only One Frame of Compressed Data
+图2-12：案例3 - 每个缓冲区只填充一帧压缩数据
+
+The benefit in case 3 is that a decoding component does not have to parse the data. Parsing would be required at the source component. However, this method creates a bottleneck in data transfer. Data transfer would be limited to one frame per transfer. Depending on the implementation, one transaction per frame could have a greater impact on performance than parsing frames from a buffer.
+案例3中的好处是解码组件不必解析数据，而源组件需要解析。但是，这种方法会造成数据传输的瓶颈，数据传输被限制为每次传输一帧。根据实现情况，每帧只处理一个事务可能比从缓冲区中解析帧会对性能造成更大的影响。
+
+At a minimum, a decoder or encoder component would be required to support case 1. By definition, if a codec component can support case 1, then it can support cases 2 and 3, but only if the compression format allows for byte-aligned frame boundaries. Operating in case 2 or 3 may not make sense when, for example, configuring an Adaptive Multi-Rate (AMR) codec for RTP-payload format, bandwidth-efficient mode. The non-byte aligned frames defined by this format would not fit the byte-aligned frame boundaries defined by these cases.
+解码器或编码器组件至少需要支持案例1。根据定义，如果编解码器组件可以支持案例1，则它也可以支持案例2和3，但是是在压缩格式允许字节对齐帧边界的情况下。例如，配置一个自适应多速率（AMR）编解码器在RTP载荷格式，带宽效率模式下时，案例2或3可能就没有意义。因为这种格式是非字节对齐的帧。
+
+When filling a buffer with compressed data for input to a decoder or output from an encoder, a problem with limiting the filling to complete frames only might arise when frames are not byte aligned. Padding would have to be added outside of any padding defined in the format specification. The padding would then need to be removed, since the data could not be appended as is. This would require knowledge of the padding bits outside of any standard specification. Likewise, if this padding were not in place to maintain compliance with the standards specification for the port configuration, complete frames could not always be placed in the buffers. In either case, specific knowledge of how this situation is handled would be required, and may be different between components.
+当用压缩数据填充缓冲区用以输入到解码器或来自编码器的输出时，如果帧不是字节对齐的话，可能会出现非完整帧填充受限的问题。为解决这个问题，就需要在格式规范以外添加额外的数据,而这些填充数据需要删除。 这需要知道哪些是标准规范之外的填充位。同样，如果此填充不能保持符合端口配置的标准规范，则完整的帧不能始终放置在缓冲区中。在任何一种情况下，都需要具体了解这种情况如何处理，并且可组件之间可能有所不同。
+
+For interoperability, the content delivered in a buffer should not be assumed or required to be any number of complete frames, although at least one complete unit of data will be delivered in a buffer for uncompressed data formats. Compressed data formats do not place restrictions on the amount of content delivered in each buffer.
+为了实现互操作性，缓冲区中提供的内容不应被假定或要求为任何数量的完整帧，尽管至少有一个完整的数据单元将在未压缩数据格式的缓冲区中提供。压缩数据格式不会限制每个缓冲区中传递的内容数量。
+
+
+
+
+
+
+
+
+
+
+
+
+
+2.1.13 Buffer Flags and Timestamps
+
+Buffer flags associate certain properties (e.g., the end of a data stream) with the data contained in a buffer. A buffer timestamp associates a presentation time in microseconds with the data in the buffer used to time the rendering of that data. Once a timestamp is associated with a buffer, no component should alter the timestamp for rate control or synchronization, which are implemented in the clock component.
+
+Buffer metadata (i.e., flags and timestamps) applies to the [first] new logical unit in the buffer. Thus, given the presence of multiple logical units in a buffer, the metadata applies to the logical unit whose starting boundary occurs first in the buffer. [Subsequent logical units in a buffer don’t have explicit flags nor timestamps. If explicit flag and timestamps are required on every logical unit, one or less logical unit should be included in each buffer]. Unless otherwise stated (e.g., in a flag definition), a component that receives a logical input unit marked with a flag or timestamp shall copy that metadata to all logical output units that the input contributes to.
+
+2.1.14 Synchronization
+
+Synchronization is enabled by the use of synchronization (sync) ports on a clock component. These ports and the clock component are defined within the “other” domain and operate with the same protocols and calls that regulate data ports. The clock component maintains a media clock that tracks the position in the media stream based on audio and video reference clocks. The clock component transmits buffers containing time information (denoted by a media time update and containing the media clock’s current position, scale, and state) to client components via sync ports. A client component may time the execution of an operation (e.g., the presentation of a video frame) to a timestamp by requesting that the clock component send that timestamp when it matches the media clock. In this case, the client component executes the operation when it receives the fulfillment of the request over its sync port. Figure 2-13 illustrates the flow of time and data buffers in an example configuration of components.
+
+Figure 2-13. Flow of Time and Data Buffers
+
+2.1.15 Rate Control
+
+The clock component also implements all rate control by exposing a set of configurations for controlling its media clock. The IL client may change the scale factor of the media clock (effectively changing the rate and direction that the media clock advances) to implement play, fast forward, rewind, pause, and slow motion trick modes. The IL client may also start and stop the clock by using these configurations to change the state of the media clock. The clock component makes all of its client components aware of a change to the media clock scale and state by sending a media time update with the new scale or state on all sync ports. Although a component may not alter a buffer timestamp in reaction to a scale change, a component may alter its processing accordingly. For instance, an audio component might scale and pitch correct audio during trick modes or cease transmitting output entirely.
+
+2.1.16 Component Registration
+
+How components are registered with a core is generally core specific.
+
+However, if the core supports static linking with components, then it will support a standard compile-time component registration scheme as described in section 3. Vendors can therefore supply components that are suitable for static linking with all cores that support it; this is achieved by placing component information into a data structure that is linked with the component and the core.
+
+A component can be registered statically using this mechanism but have the bulk of its code dynamically loaded.
+
+A component supplies an interface for retieving the standard component roles it supports. The core may leverage this interface for exposing role-related information to the IL client.
+
+2.1.17 Resource Management
+This section discusses the role of resource management in the OpenMAX IL API.
+
+2.1.17.1 Need for Resource Management
+When a component is not allowed to go to idle state due to lack of resources, the IL client does not know what the limited resource is or which components are using that resource. Therefore, the IL client cannot resolve the resource conflict. These situations necessitate IL resource management.
+
+One of the goals of OpenMAX IL is hardware independence provided by the IL layer to the layers above it. The goal of hardware independence can be achieved by specifying the following requirements regarding resource management:
+
+•
+An IL client (e.g., a multimedia plug-in that is typically part of a software platform) should not need to know the details of an IL implementation or which resource an IL component is using.
+•
+In case of resource conflicts, an IL client should be able to rely on consistent component behavior across IL implementations and hardware platforms.
+•
+An IL client should not have to interface directly with a hardware vendor-specific resource manager for two reasons.
+o
+This method violates the goal of hardware independence.
+o
+This method adds considerable re-work to the IL client, which has an impact on the re-usability of the IL client on multiple hardware platforms
+
+
+Although resource management is not fully addressed in OpenMAX IL API version 1.1, “hooks” for resource management have been put in place in the form of behavioral rules, component priorities, and a resource management-related component state. These “hooks” lay the groundwork for full-fledged resource management in later versions of the OpenMAX IL API.
+
+Before proceeding further, the terms resource management and policy are defined for the benefit of the discussion that follows:
+
+•
+Resource management is responsible for managing the access of components to a limited resource. A resource manager will be aware of how much of a specific resource is available, which components are currently using the resource, and how much of the resource the components are using. A resource manager will recommend to policy which components should be pre-empted or resumed based on resource conflicts and availability.
+•
+Policy is responsible for managing component chains or streams. Policy is used to determine if a stream can run based on information including resources, system configuration, and other factors.
+
+
+
+2.1.17.2 Example Architecture
+Figure 2-15 shows a high-level architecture diagram of an exemplar OpenMAX IL-based system. In this example, a multimedia framework with a policy manager exists between the applications and the IL layer. This exemplar system also has multiple hardware platforms that are used by different OpenMAX IL components and that are managed by multiple hardware vendor-specific resource managers. But this system would work just as well with a single, centralized resource manager.
+
+This example architecture is used as a background for the following discussion on component priorities, behavioral rules and hardware-specific resource managers. It is to be noted, however, that this discussion applies to any OpenMAX IL-based architecture. 
+
+Figure 2-14. Example Architecture
+
+To ensure consistent component behavior in case of resource conflicts, a common definition of component priority and a set of behavioral rules are needed.
+
+
+2.1.17.3 Component Priorities
+Each IL component has a priority value (an OMX_U32 integer) that the IL client sets.
+
+A descending order of priority is chosen with 0 denoting the highest priority. The following tie-breaking rule also applies: When comparing components with the same priority, components that have acquired the resource most recently should be deemed to be of higher priority than components that have had the resource longer IL components may also be assigned a group priority by the IL client. Any component sharing the same group ID maintains the same group priority .
+
+2.1.17.4 Behavioral Rules
+The following behavior is defined on the IL layer:
+
+• The OMX_ErrorInsufficientResources error is called only on a component that attempts to go to the idle state when there are insufficient resources and sufficient resources cannot be freed by preempting lower priority components.
+
+• A component is not aware that preemption is occurring when it tries to go to the idle state, and the resources it requires need to be freed by preempting lower priority components.
+
+• When a component that has resources which need to be preempted, it will send the OMX_ErrorResourcesPreempted error to the IL Client as it moves from the Executing or Paused state to the Idle state. The component will send the OMX_ErrorResourcesLost error to the IL client as it moves from the Idle state to the Loaded state once the resources are released.
+
+• In cases where the IL client wants to know when the stream associated with the component can be resumed or started, the IL client shall request to be notified when resources are available. This occurs by putting the component into the OMX_StateWaitForResources state. When the resources become available, the component automatically goes to the idle state. When the client receives the notification that the component is in the idle state, it can try to move the rest of the components in that chain to the idle state as well. This automatic movement to the idle state ensures that in cases where multiple IL clients are waiting for the same resource, the IL client can resume or start the stream as soon as the resource is available. If the component were to automatically move just to the loaded state, then another IL client could grab that resource first.
+
+These behavioral rules are intended to cover only the interactions between the IL client(s) and the IL components.
+
+
+2.1.17.5 Hardware Vendor-Specific Resource Manager
+
+To implement the behavioral rules, a hardware vendor-specific resource manager may exist and perform the following functions:
+
+• Implement and manage the wait queue(s).
+• Keep track of available resources.
+• Keep track of each component that has resources and which resources they are using.
+• Notify a component or multiple components that they need to give up their resources when a higher priority component requests the resource.
+• Notify the highest priority component waiting for a resource when the resource is available.
+
+The actual interactions between the components and the hardware vendor-specific resource manager(s) are vendor-specific and outside the scope of this document. Section 3 provides more details of the parameter structures and use cases related to priority and resource management.
+
+
+2.1.17.6 Component Suspension
+When a component lacks sufficient resources to process data it may elect to suspend itself as a means to enable more optimal dynamic resource management. Component suspension addresses two use cases:
+
+1. Component has lost an essential resource and the resource loss is potentially temporary in nature.
+2. Dynamic allocation of essential resources has failed
+
+In the absence of the ability to suspend, the component’s only possible reaction to the preemption and loss of a resource is deinitialization via a transition to the Idle and then Loaded states. Such deinitialization causes the state of the data stream to be lost because the buffers have to be returned to their allocator. Suspension allows a component to retain its state so that it may be resumed at the point of suspension after some delay.
+
+Suspension is a property of a component when it is in the idle or paused component states. Specifically a component is “suspended” when it has lost one or more resources that prevent it from processing data. This means that a component cannot be suspended and be in the executing state at the same time (since “executing” implies the component will process or output data whenever that data is available). Therefore, a component may be suspended anytime it is normally holding some resources but not seeking to process data, namely when in the idle or paused states.
+
+Component suspension requires no new component states but adds one new component-initiated state transition, namely a transition from the executing to the paused which an executing component performs on itself upon suspension. IL client may perform any of the normal state transitions on a suspended component with the following exception: a client may not transition a suspended component into the Executing state. Any attempt to do so will fail and return the OMX_ErrorComponentSuspended error.
+
+2.1.18 Content Pipes
+IL components may leverage content piping to synchronously pull in or push out content (e.g. a filestream) from a source or destination abstracting the platform implementation specifics of the source or destination (e.g. local file, remote file, broadcast, etc). A content pipe is an object that provides content access by implementing the data access abstraction interface defined in the content pipe structure.
+
+The content pipe interface includes functions for conventional content manipulation including:
+• opening, closing, and creating content
+• seeking to a particular position in the the content
+• getting the position in the content
+• reading data from the current position
+• writing data to the current position
+
+This content pipe interface also includes functions to accommodate content pipe implementations that may be streaming data asynchronously to or from a remote location. In this case the pipe may not be immediately ready to provide data (in the case of reading) or accept data (in the case of writing). Furthermore such pipes may maintain their own data caches. These functions support:
+
+• Checking the pipe for available bytes (either incoming or outgoing) to verify a pipe client may perform a subsequent read or write.
+• Reading or writing data via pipe supplied data buffers to avoid unnecessary memory copies between pipe buffers and client buffers.
+
+A component that leverages content pipes (e.g. a container demuxer or muxer) acquires the pipe from IL Core via the OMX_GetContentPipe function. Alternatively the IL client may provide a custom content pipe (e.g. if the client implements the content pipe itself) via the OMX_IndexParamCustomContentPipe config. The IL client specifies the target content as a URI via the OMX_IndexParamContentURI param.
+
+2.1.19 File Parsing
+OpenMAX IL 1.1 defines both standard container format demuxers and the mechanisms to facilitate file parsing functionality in such components. These include means:
+• For a component to indicate whether or not it successfully detected and supports the datastream format it was given.
+• For a component to inspect and select the streams available on each of the components output ports (when there are multiple alternative streams).
+• For the IL client to traverse, extract, and filter the metadata a component captures from a data stream.
+
+2.1.20 Video Decoder Error Mapping
+A video decoder component has the ability to inform the IL client of any macroblock (MB) errors it encounters while decoding the stream.The client may query the component for a map of the MB errors it has encountered at any time via a dedicated parameter.
+
+One pontential use for this functionality is the Video Telephony use case where the video terminal at one end of the connection generates an encoded bitstream for a remote video terminal. The encoded bitstream might get corrupted during transmission resulting in MB errors when the remote terminal receives and decodes it. An application that can communicate with both may extract the MB error map at the decoding terminal and transmit it to the encoding terminal allowing it to refresh the macroblocks in error with intra macroblocks in a subsequent encoded frame.
+
+Figure 2-15. Example Use Case for Error Mapping
+
+2.1.21 Buffer Payload Additional Information
+Depending on buffer payload types and component requirements, a need may arise where additional supporting information will need to be appended to the end of the buffer to further process the buffer payload content within the next component.
+
+For instance, video deblocking algorithms require macroblock level quantization information in order to perform the deblocking process on the video content. The existence of additional buffer payload information shall be identified via the “extra data” buffer flag within the buffer header structure, which is described in section 3.1.2.7 — OMX_BUFFERHEADERTYPE.
+
+This additional buffer payload information applies to the first new logical unit in the buffer. Thus, given the presence of multiple logical units in a buffer, the “extra data” flag applies to the logical unit whose starting boundary occurs first in the buffer. Subsequent logical units in a buffer don’t have explicit “extra data”. If explicit “extra data” are required on every logical unit, one or less logical unit should be included in each buffer.
+
+2.1.21.1 Buffer Data Formatting
+When extra data is present, the data attributes like type and size are identified by a
+corresponding data structure,immediately following the buffer payload and preceding the
+actual data. Multiple types of extra data may be appended to the end of the normal
+payload as series of block pairs (supporting data structure and actual data). To terminate
+this list of extra data sections, a further data structure should be included in the buffer
+which indicates that this is the terminating item. For more details see Section 4.2.33.
+
+Figure 2-16. Formatting of Extra Buffer Data
+
+2.2 Endianness
+The endianness used in the implementation of OpenMAX IL API data structures shall obey the endianness of the platform on which the IL client is running. This requirement includes interfaces used by the IL client and interfaces between components (e.g. functions executed exclusively between two tunneling components). The OpenMAX IL implementation is responsible for any endianness conversions inherent in supporting this requirement; any such conversions are transparent to the IL client and to components using the same endianness as the IL client.
+
+
+
+
+
+
+
 
 
 

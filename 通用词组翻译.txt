@@ -1,18 +1,54 @@
-
+/* 完全不翻译的术语 */
 OpenMAX IL - 不翻译
 API - 不翻译
-Buffer - 不翻译（缓冲区，推荐不翻译）
+GUI
+
+Invalid
+Idle
+Loaded
+Executing
+Pause
+
+
+in-context
+out-of-context
+
+
+
+/* 可以不翻译的术语 */
+OpenMAX IL core - 不翻译（OpenMAX IL 内核）
+Buffer - 不翻译（缓冲区）
 Flush - 不翻译（冲刷？推荐不翻译）
+Content Pipe - 不翻译（内容管道）
+Component Suspension - 不翻译（组件挂起）
+wrapper - 不翻译（）
+sink - 不翻译（接收器？）
+buffer header - 不翻译（缓冲区头部）
 
 
 
+/* 建议翻译的术语 */
 setup - 安装
 teardown - 卸载
-
-
 Component - 组件
 Client - 客户端
 Port - 端口
 Callbacks - 回调函数
-Tunneled - 隧道化
+Tunnels/Tunneling - 隧道/隧道化
 Payload - 负载
+metadata - 元数据
+Container - 容器
+Synchronization - 同步
+Component Profiles - 配置组件
+interop - 交互
+de-initialize - 反初始化
+re-use - 再使用
+
+
+/* 不会的翻译 */
+gating - 门控
+
+
+
+
+

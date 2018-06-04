@@ -1,0 +1,10 @@
+
+
+PDF 26页：
+Thus we often distinguish between those resources allocated “up front” (e.g. on a transition to IDLE) and those allocated later by calling the former static resources and the latter dynamic resources.
+
+因此，我们经常区分这两种资源，例如，向IDLE过渡前“先期”分配的资源为静态分配的资源，稍后通过调用而获得的资源称为动态分配的资源。
+
+
+
+
