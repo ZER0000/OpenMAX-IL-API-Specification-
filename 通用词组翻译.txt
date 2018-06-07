@@ -24,7 +24,9 @@ Component Suspension - 不翻译（组件挂起）
 wrapper - 不翻译（）
 sink - 不翻译（接收器？）
 buffer header - 不翻译（缓冲区头部）
-
+seek
+Content Pipes - 内容管道
+macroblock - MB
 
 
 /* 建议翻译的术语 */
@@ -43,12 +45,23 @@ Component Profiles - 配置组件
 interop - 交互
 de-initialize - 反初始化
 re-use - 再使用
+presentation time - 呈现时间
+metadata - 元数据
+scale - 缩放
+trick modes - 特技模式
+hooks - 钩子
+
+encoded bitstream - 码流（编码比特流）
+Endianness - 字节序
+
+
+
 
 
 /* 不会的翻译 */
 gating - 门控
 
-
+re-work
 
 
 

@@ -6,5 +6,10 @@ Thus we often distinguish between those resources allocated “up front” (e.g.
 因此，我们经常区分这两种资源，例如，向IDLE过渡前“先期”分配的资源为静态分配的资源，稍后通过调用而获得的资源称为动态分配的资源。
 
 
+PDF 41页：
+Component suspension requires no new component states but adds one new component-initiated state transition, namely a transition from the executing to the paused which an executing component performs on itself upon suspension. IL client may perform any of the normal state transitions on a suspended component with the following exception: a client may not transition a suspended component into the Executing state. Any attempt to do so will fail and return the OMX_ErrorComponentSuspended error.
+组件挂起不需要新的组件状态，只是添加了一个新的组件启动的状态，即从Executing到Pause的转换，执行组件在挂起时对自身执行的转换。IL客户端可以执行挂起组件上的任何正常状态转换，但存在以下例外情况：客户端可能不会将挂起的组件转换为执行状态。任何尝试这样做都会失败并返回OMX_ErrorComponentSuspended错误。
 
-
+PDF 43页：
+One pontential use for this functionality is the Video Telephony use case where the video terminal at one end of the connection generates an encoded bitstream for a remote video terminal. The encoded bitstream might get corrupted during transmission resulting in MB errors when the remote terminal receives and decodes it. An application that can communicate with both may extract the MB error map at the decoding terminal and transmit it to the encoding terminal allowing it to refresh the macroblocks in error with intra macroblocks in a subsequent encoded frame.
+此功能的一个用途是视频电话，其中一端的视频终端为远程视频终端生成码流。码流在传输过程中可能会损坏，导致远程终端接收并解码时发生MB错误。应用程序可以在解码终端提取MB错误图，并将其发送给编码终端，从而允许其在随后的编码帧中用内部MB error刷新宏块。
