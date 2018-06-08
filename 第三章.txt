@@ -1,0 +1,462 @@
+3 OpenMAX Integration Layer Control API
+3 OpenMAX IL控制API
+
+The OpenMAX Integration Layer API allows integration layer clients to control multimedia components in the audio, video and image domains. An “other” domain is also included to provide for extra functionality, such as audio-video (A/V) synchronization. The user of the OpenMAX Integration Layer API is usually a multimedia framework. In the rest of this document, the user of the OpenMAX Integration Layer API will be referred to as the IL client.
+OpenMAX IL API允许IL客户端控制audio, video和 image域中的多媒体组件,还包含“other”域提供的额外功能，例如音视频（A/V）同步。OpenMAX IL API的用户通常是一个多媒体框架。 在本文的其余部分，OpenMAX IL API的用户将被称为IL Client。
+
+The OpenMAX Integration Layer API is defined in a set of header files, namely:
+OpenMAX IL API是在一组头文件中定义的，即：
+• OMX_Types.h: Data types used in the OpenMAX IL
+• OMX_Core.h: OpenMAX IL core API
+• OMX_Component.h: OpenMAX IL component API
+• OMX_Audio.h: OpenMAX IL audio domain data structures
+• OMX_IVCommon.h: OpenMAX IL structures common to image and video domains
+• OMX_Video.h: OpenMAX IL video domain data structures
+• OMX_Image.h: OpenMAX IL image domain data structures
+• OMX_Other.h: OpenMAX IL other domain data structures (includes A/V synchronization)
+• OMX_Index.h: Index of all OpenMAX IL-defined data structures
+• OMX_ContentPipe.h: Content pipe definition
+
+• OMX_Types.h：OpenMAX IL中使用的数据类型
+• OMX_Core.h：OpenMAX IL核心API
+• OMX_Component.h：OpenMAX IL组件API
+• OMX_Audio.h：OpenMAX IL音频域数据结构
+• OMX_IVCommon.h：图像和视频域通用的OpenMAX IL结构
+• OMX_Video.h：OpenMAX IL视频域数据结构
+• OMX_Image.h：OpenMAX IL图像域数据结构
+• OMX_Other.h：OpenMAX IL其他域数据结构（包括A/V同步）
+• OMX_Index.h：所有OpenMAX IL定义的数据结构索引
+• OMX_ContentPipe.h：内容管道定义
+
+
+This section describes how the OpenMAX IL core and OpenMAX IL components are configured for operation.
+本节介绍如何配置OpenMAX IL内核和OpenMAX IL组件以进行操作。
+
+First, the OpenMAX IL data types are introduced. Next, the methods of the OpenMAXIL core are described. The methods that components implement are discussed in section3.2.3. Finally, section 3.4 shows calling sequences for a few meaningful operations,including component initialization, normal data flow, data tunnel setup, and data flow in the presence of data tunneling. Such sequence diagrams aim at describing the dynamicinteractions between the IL client, the IL core, and the OpenMAX IL components. When documenting functions, the following convention is used for function parameters:
+首先介绍OpenMAX IL数据类型,接下来，描述OpenMAXIL Core的方法。组件实现的方法在3.2.3节中讨论。最后，3.4节描述了一些有意义的操作的调用序列，包括组件初始化，正常数据流，数据隧道设置和存在数据隧道的数据流，序列图旨在描述IL客户端，IL Core和OpenMAX IL组件之间的动态相互作用。当记录函数时，以下约定适用于函数参数：
+
+• <param_name> [in] specifies an input parameter, which is set by the function caller and read by the function implementation.
+• <param_name> [in]指定一个输入参数，该参数由调用函数的程序设置并在函数的实现中读取。
+
+• <param_name> [out] specifies an output parameter, which is set by the function implementation and passed back to the caller. When the function returns, the caller can read the new value of the parameter, which is passed as a reference.
+•<param_name> [out]指定一个输出参数，该参数在函数的实现中设置并返回给调用者。当函数返回时，调用者可以读取参数的新值，通常通过引用传递过来。
+
+• <param_name> [inout] specifies an input/output parameter, which the function caller can set. The function implementation can modify the parameter before returning it back to the function caller.
+• <param_name> [inout]指定一个输入/输出参数。函数的调用者可以设置该值，而函数的实现可以在返回给函数调用者之前修改该参数。
+
+This parameter classification can also be found in the OpenMAX IL header files, where the null macros OMX_IN, OMX_OUT and OMX_INOUT are defined. OMX_IN corresponds to the function parameter <param_name> [in]. OMX_OUT corresponds to the function parameter <param_name> [out], and OMX_INOUT corresponds to the function parameter <param_name> [inout].
+这些参数分类也可以在OpenMAX IL头文件中找到，其中定义了空的宏OMX_IN，OMX_OUT和OMX_INOUT。OMX_IN对应于函数参数<param_name> [in]。OMX_OUT对应于函数参数<param_name> [out]，而OMX_INOUT对应于函数参数<param_name> [inout]。
+（举例：#define OMX_IN ）
+
+3.1 OpenMAX IL Types
+3.1 OpenMAX IL 类型
+
+3.1.1 Enumerations
+3.1.1 枚举
+
+Five 32-bit integer enumerations are defined in OMX_Core.h:
+OMX_Core.h中定义了五个32位整数枚举：
+
+• OMX_ERRORTYPE is returned by each function defined in the OpenMAX Integration Layer API (see section 3.1.1.3).
+• OMX_COMMANDTYPE includes the possible commands that an IL client can send to an OpenMAX IL component (see section 3.1.1.1).
+• OMX_EVENTTYPE includes events that can be generated inside an OpenMAX IL component and that are passed to the IL client through a callback function (see section 3.1.1.4).
+• OMX_BUFFERSUPPLIERTYPE includes all the possibilities for the buffer supplier in the case of tunneled ports. A description of the use of this enumerative type can be found in section 3.1.1.5.
+• OMX_STATETYPE, which is described in section 3.1.1.2.
+
+• OMX_ERRORTYPE 是各个函数的返回值（请参阅第3.1.1.3节）。
+• OMX_COMMANDTYPE 包含了IL客户端可能发送给OpenMAX IL组件的命令（请参阅第3.1.1.1节）。
+• OMX_EVENTTYPE 包含了可在OpenMAX IL组件内部生成的事件，并通过回调函数传递给IL客户端（请参阅第3.1.1.4节）。
+• OMX_BUFFERSUPPLIERTYPE 包含了在隧道端口下的所有buffer供应者的可能性。这个枚举类型的使用描述可以在3.1.1.5节中找到。
+• OMX_STATETYPE 在3.1.1.2节中描述。
+
+
+
+3.1.1.1 OMX_COMMANDTYPE
+
+Table 3-1 represents the possible commands that an IL client can send to an OpenMAX IL component. Since commands are non-blocking, the OpenMAX IL component generates a command completion event via a callback function when the command has completed. Callbacks are defined in a dedicated structure; see section 3.1.2.8.
+表3-1表示了IL客户端可能发送给OpenMAX IL组件的命令。由于命令是非阻塞的，当命令完成时，OpenMAX IL组件会通过回调函数发送命令完成事件，回调是在专门的结构中定义的; 见3.1.2.8节。
+
+Table 3-1: OpenMAX IL Commands
+表 3-1: OpenMAX IL 命令
+
+Field Name 
+字段名称
+Description
+描述
+OMX_CommandStateSet
+Change the component state
+改变组件的状态
+OMX_CommandFlush
+Flush the queue(s) of buffers on a port of a component
+冲刷组件端口上的缓冲区队列
+OMX_CommandPortDisable
+Disable a port on a component
+禁用组件上的某一个端口
+OMX_CommandPortEnable
+Enable a port on a component
+启用组件上的某一个端口
+OMX_CommandMarkBuffer
+Mark a buffer and specify which other component will raise the event mark received
+标记缓冲区并指定哪个组件将引发收到的事件标记
+
+Table 3-2 describes the parameters to be used for each command.
+表3-2描述了用于每个命令的参数。
+Table 3-2: Command Syntax
+表3-2：命令语法
+
+Command code
+nParam
+pCmdData
+OMX_CommandStateSet
+OMX_STATETYPE – state to transition to
+OMX_STATETYPE – 将要转换的状态
+NULL
+OMX_CommandFlush
+OMX_U32 – target port ID
+OMX_U32 – 目标端口的 ID
+NULL
+OMX_CommandPortDisable
+OMX_U32 – target port ID
+NULL
+OMX_CommandPortEnable
+OMX_U32 – target port ID
+NULL
+OMX_CommandMarkBuffer
+OMX_U32 – target port ID
+OMX_MARKTYPE* - mark data and target component
+OMX_MARKTYPE* - 标记的数据和目标组件
+
+3.1.1.2 OMX_STATETYPE
+
+Figure 3-1 illustrates the transitions among states that occur as a consequence of the IL client calling OMX_SendCommand(OMX_StateSet, <state>), where the new state for the component is passed as a parameter. A transition name surrounded by “<” and “>” brackets indicates that the transition is not triggered by a command sent by the IL client but is a consequence of internal component events.
+图3-1说明了由于IL客户端调用OMX_SendCommand（OMX_StateSet，<state>）而导致的状态转换，其中组件的新状态作为一个参数传递。由“<”和“>”括起来的名称并不是由IL客户端发送的命令触发的，而是由内部组件一系列事件引起的。
+
+Figure 3-1. OpenMAX IL Component State Transitions
+图3-1. OpenMAX IL组件状态转换
+
+This section describes component states. An IL client commands a component to change states via the OMX_SendCommand function using the OMX_CommandStateSet command.
+本节介绍组件的状态。IL客户端使用OMX_SendCommand函数发送OMX_CommandStateSet命令来使组件改变状态。
+
+Table 3-3 represents the states of an OpenMAX IL component.
+表3-3 表示OpenMAX IL组件的状态
+
+Table 3-3: OpenMAX IL Component States
+表 3-3: OpenMAX IL 组件状态
+
+Field Name
+Description
+Static Resources Allocated 静态资源分配
+Location of buffer
+
+OMX_StateInvalid
+Component is corrupt or has encountered an error from which it cannot recover.
+组件损坏或遇到无法恢复的错误。
+Unknown
+Unknown
+
+OMX_StateLoaded
+Component has been loaded but has no resources allocated.
+组件已被加载但没有分配资源。
+No
+Not available
+
+OMX_StateIdle
+Component has all resources but has not transferred any buffers or begun processing data.
+组件具有所有资源，但尚未传输任何缓冲区或尚未开始处理数据。
+Yes
+Supplier only
+
+OMX_StateExecuting
+Component is transferring buffers and is processing data (if data is available).
+组件正在传输缓冲区并正在处理数据（如果数据可用）。
+Yes
+Supplier or non-supplier
+
+OMX_StatePause
+Component data processing has been paused but may be resumed from the point it was paused.
+组件数据处理已暂停，但可能会从暂停点恢复。
+Yes
+Supplier or non-supplier
+
+OMX_StateWaitFor Resources
+Component is waiting for a resource to become available.
+组件正在等待资源变为可用。
+No
+Not available
+
+
+3.1.1.2.1 OMX_StateLoaded
+
+A component is in the OMX_StateLoaded state after it has been created via an OMX_GetHandle call and before allocation of its resources. In this state, the IL client may modify the component’s parameters via OMX_SetParameter, set up data tunnels on the component’s ports with OMX_SetupTunnel, or transition the component to either the OMX_StateIdle state or the OMX_StateWaitForResources state.
+在通过OMX_GetHandle创建并在分配给其资源之前，组件处于OMX_StateLoaded状态。 在此状态下，IL客户端可以通过OMX_SetParameter修改组件的参数，使用OMX_SetupTunnel在组件端口上设置数据通道，或者将组件转换为OMX_StateIdle状态或OMX_StateWaitForResources状态。
+
+The IL client may elect to transition a component that is currently in the OMX_StateLoaded state into the OMX_StateWaitForResources state if, for example, the component failed to acquire all of its static resources on an attempted transition to the OMX_StateIdle state.
+例如，如果组件在试图转换到OMX_StateIdle状态时未能获取其所有静态资源，IL客户端可能会选择将当前处于OMX_StateLoaded状态的组件转换为OMX_StateWaitForResources状态。
+
+3.1.1.2.1.1 OMX_StateLoaded to OMX_StateIdle
+
+If the IL client requests a state transition from OMX_StateLoaded to OMX_StateIdle, the component shall acquire all of its static resources, including buffers for all enabled ports, before completing the transition. The component does not acquire buffers for any disabled ports. Furthermore, before the transition can complete, the buffer supplier,which is always the IL client when not tunneling, shall ensure that the non-supplier possesses all of its buffers.
+如果IL客户端请求把组件从OMX_StateLoaded转换到OMX_StateIdle状态，那么在完成转换之前，组件应获取其所有静态资源，包括为所有已启用的端口分配缓冲区。该组件不会为任何禁用的端口分配缓冲区。此外，在转换完成之前，缓冲区供应者（没有隧道连接时总是IL客户端）应确保非供应者拥有其所有缓冲区。
+
+For a port connected to the IL client, the IL client may allocate the buffers itself and then pass them to the port via an OMX_UseBuffer call on the port, or it may direct the port to perform the allocation via an OMX_AllocateBuffer call on the port. For each port, the IL client shall exclusively use OMX_UseBuffer or OMX_AllocateBuffer.
+对于连接到IL客户端的端口，IL客户端可以自己分配缓冲区，然后通过端口上的OMX_UseBuffer调用将它们传递给端口，或者可以指示端口通过OMX_AllocateBuffer执行分配。对于每个端口，IL客户端应专门使用OMX_UseBuffer或OMX_AllocateBuffer。
+
+When a port is tunneling, the supplier port either allocates buffers itself or, if the port implements buffer sharing, re-uses buffers from a port on the same component. A tunneling supplier port then passes the buffers to the non-supplier port via an OMX_UseBuffer call on the non-supplier.
+当一个端口进行隧道传输时，供应端口可以自己分配缓冲区，或者如果端口实现缓冲区共享，则从同一个组件的端口再使用缓冲区。隧道的非供应者端口通过OMX_UseBuffer来从供应者端口获取缓冲区。
+
+The number of buffers used on a port is specified in its port definition (see OMX_IndexParamPortDefinition), which defaults to the minimum (specified in the same structure) but which may be modified by the supplier before the sequence of OMX_UseBuffer and OMX_AllocateBuffer calls via a call to OMX_SetParameter.
+端口使用的缓冲区数目在其端口定义中指定（参见OMX_IndexParamPortDefinition），默认值为最小值（在相同结构中指定），但供应者可以在调用OMX_UseBuffer和OMX_AllocateBuffer之前通过OMX_SetParameter函数修改。
+
+
+3.1.1.2.2 OMX_StateIdle
+In the OMX_StateIdle state, the component is ready to be used, meaning that all necessary static resources have been properly allocated. However, the suppliers retain all their buffers, and no buffer exchange or processing is taking place. Thus, if this state is entered from an OMX_StateExecuting or OMX_StatePause state, the component shall have returned all buffers it was processing to their respective suppliers. The IL client may transition the component to any states other than the OMX_StateInvalid and OMX_StateWaitForResources states.
+在OMX_StateIdle状态下，组件已准备好使用，这意味着所有必需的静态资源都已正确分配。但是，供应者保持着所有的缓冲区，不进行缓冲区交换或处理。 因此，如果该状态是从OMX_StateExecuting或OMX_StatePause状态进入的，那么该组件应该将它正在处理的所有缓冲区返回给它们各自的供应者。IL客户端可以将组件转换为除OMX_StateInvalid和OMX_StateWaitForResources状态以外的任何其他状态。
+
+3.1.1.2.2.1 OMX_StateIdle to OMX_StateLoaded
+
+On a transition from OMX_StateIdle to OMX_StateLoaded, each buffer supplier shall call OMX_FreeBuffer on the non-supplier port for each buffer residing at the non-supplier port. If the supplier allocated the buffer, it shall free the buffer before calling OMX_FreeBuffer. If the non-supplier port allocated the buffer, it shall free the buffer upon receipt of an OMX_FreeBuffer call. Furthermore, a non-supplier port shall always free the buffer header upon receipt of an OMX_FreeBuffer call. When all of the buffers have been removed from the component, the state transition is complete; the component communicates that the initiating OMX_SendCommand call has completed via a callback event.
+在从OMX_StateIdle到OMX_StateLoaded的转换中，缓冲区的供应者应该调用OMX_FreeBuffer，而使非供应者端口释放缓冲区。如果供应者已经分配了缓冲区，则应在调用OMX_FreeBuffer之前自己释放缓冲区。如果非供应者端口分配了缓冲区，它将在收到OMX_FreeBuffer后释放缓冲区。此外，非供应者端口在收到OMX_FreeBuffer时应该始终释放buffer header。当所有缓冲区都从组件中移除后，状态转换完成;该组件通过回调事件通知告诉OMX_SendCommand已完成。
+
+3.1.1.2.2.2 OMX_StateIdle to OMX_StateExecuting
+
+This transition is disallowed when the component is suspended. If the IL client requests a state transition from OMX_StateIdle to OMX_StateExecuting and the component is not suspended, the component shall begin transferring and processing data. If the client requests this transition when the component is suspended the component shall fail the call returning the OMX_ErrorComponentSuspended error. For ports that communicate with the IL client, the IL client will initiate buffer transfers via OMX_EmptyThisBuffer and OMX_FillThisBuffer. Among tunneling ports, any input port that is also a supplier shall transfer its empty buffers to the tunneled output port via OMX_FillThisBuffer.
+当组件被挂起时，不允许此类转换。如果IL客户端请求组件从OMX_StateIdle到OMX_StateExecuting的状态转换，并且组件未挂起，则组件应开始传输和处理数据。如果客户端在组件挂起时请求这个转换，该调用将失败并返回OMX_ErrorComponentSuspended错误。对于与IL客户端通信的端口，IL客户端将通过OMX_EmptyThisBuffer和OMX_FillThisBuffer启动缓冲区传输。在隧道端口中，是供应者的输入端口应通过OMX_FillThisBuffer将空缓冲区传输到隧道输出端口。
+
+
+3.1.1.2.3 OMX_StateExecuting
+In this state, an OpenMAX IL component is transferring and processing data buffers; the component can therefore not be suspended and in this state. The component shall accept calls to OMX_EmptyThisBuffer on its input ports and OMX_FillThisBuffer on its output ports. Any port that communicates with the IL client shall call the EmptyBufferDone and FillBufferDone callbacks to return an empty or full buffer, respectively, back to the IL client. Any tunneling port shall call OMX_FillThisBuffer or OMX_EmptyThisBuffer on its corresponding tunneled port to return an empty or full buffer, respectively, back to its tunneled port. An IL client may transition a component in the OMX_StateExecuting state to either the OMX_StateIdle state or the OMX_StatePause state.
+在这种状态下，OpenMAX IL组件正在传输和处理数据; 组件处于该状态时不可以被挂起。组件应接受其输入端口上的OMX_EmptyThisBuffer的调用和输出端口上的OMX_FillThisBuffer的调用。任何与IL客户端进行通信的端口都会调用EmptyBufferDone和FillBufferDone回调函数，分别返回一个空的或满的缓冲区给IL客户端。任何隧道端口都应在其相应的隧道端口上调用OMX_FillThisBuffer或OMX_EmptyThisBuffer，以分别返回空或满缓冲区。IL客户端可以将处于OMX_StateExecuting状态的组件转换为OMX_StateIdle状态或OMX_StatePause状态。
+
+3.1.1.2.3.1 OMX_StateExecuting to OMX_StateIdle
+
+If the IL client requests a state transition from OMX_StateExecuting to OMX_StateIdle, the component shall return all buffers to their respective suppliers and receive all buffers belonging to its supplier ports before completing the transition. Any port communicating with the IL client shall return any buffers it is holding via EmptyBufferDone and FillBufferDone callbacks, which are used by input and output ports, respectively. Any non-supplier port shall return all buffers it is holding to the input port or output port it is tunneling with using OMX_EmptyThisBuffer or OMX_FillThisBuffer, respectively. Likewise, any supplier tunneling port shall wait for all of its buffers to be returned from its tunneled port.
+如果IL客户端请求从OMX_StateExecuting到OMX_StateIdle的状态转换，那么在完成转换之前，组件应将所有缓冲区返回给其各自的供应者并接收属于其供应者端口的所有缓冲区。与IL客户端通信的任何端口都应通过EmptyBufferDone和FillBufferDone回调函数返回它所持有的缓冲区，这些回调函数分别用于输入和输出端口。任何非供应者端口应分别使用OMX_EmptyThisBuffer或OMX_FillThisBuffer将其所持有的所有缓冲区返回到正在进行隧道传输的输入端口或输出端口。同样，任何供应者隧道端口都应该等待其所有缓冲区从其隧道端口返回。
+
+3.1.1.2.3.2 OMX_StateExecuting to OMX_StatePause
+
+A transition from the OMX_StateExecuting state to the OMX_StatePause state occurs under in one of three circumstances:
+• When the client explicitly requests the transition
+• When the component loses a resource required for execution but may be resumed from the point of resource loss if the resource is reacquired later. In this case the component shall execute the transition automatically and issue an error event with the OMX_ErrorResourcesSuspended error.
+• When the component is unsuccessful in an attempt to allocate dynamic resources. In this case the component shall execute the transition automatically and issue an error event with the OMX_ErrorDynamicResourcesUnavailable error.
+
+组件在以下三种情况之一发生从OMX_StateExecuting状态到OMX_StatePause状态的转换：
+•客户端明确请求转换时；
+•组件丢失执行所需的资源时；如果稍后可以重新获取资源，则会从资源丢失的地方恢复。在这种情况下，组件应自动执行转换并发出OMX_ErrorResourcesSuspended错误事件。
+•组件尝试分配动态资源失败时；在这种情况下，组件应自动执行转换并发出OMX_ErrorDynamicResourcesUnavailable错误事件。
+
+
+3.1.1.2.4 OMX_StatePause
+
+In this state, an OpenMAX IL component is not transferring or processing data but buffers are not necessarily returned to their suppliers. From the OMX_StatePause state, execution may be resumed via a transition to OMX_StateExecuting, preferably without dropping data. However, if the client requests this transition when the component is suspended the component shall fail the call returning the OMX_ErrorResourcesSuspended error. The component may still accept data buffers at its input, but such buffers will be queued only and not processed further. The IL client may transition a component in the OMX_StatePause state to OMX_StateIdle or OMX_StateExecuting. On a transition from OMX_StatePause to OMX_StateIdle, the component shall return all buffers to their respective suppliers in a manner identical to the OMX_StateExecuting-to-OMX_StateIdle transition described in section 3.1.1.2.3.1.
+在这种状态下，OpenMAX IL组件不会传输或处理数据，但缓冲区不一定会返回给其供应者。从OMX_StatePause状态，可以直接转换到OMX_StateExecuting继续执行而不丢弃数据。但是，如果客户端在组件挂起时请求此转换，那么组件将失败返回OMX_ErrorResourcesSuspended错误。该组件仍然可以在其输入端接受数据缓冲区，但这些缓冲区只会加入队列而不会进一步处理。IL客户端可以将处于OMX_StatePause状态的组件转换为OMX_StateIdle或OMX_StateExecuting。在从OMX_StatePause到OMX_StateIdle的转换中，组件应以与3.1.1.2.3.1节中描述的OMX_StateExecuting-to-OMX_StateIdle转换相同的方式将所有缓冲区返回给它们各自的供应者。
+
+3.1.1.2.5 OMX_StateWaitForResources
+
+In this state, the component is waiting for one or more of its required resources to become available. This state is related to resource management. The assumption is that one or more hardware-specific resource managers exist on the platform to handle available resources. The interaction among OpenMAX IL components and resource managers is outside the scope of this specification.
+在此状态下，组件正在等待一个或多个所需资源来使其变为可用。这种状态与资源管理有关。假设在平台上存在一个或多个特定于硬件的资源管理器来处理可用资源。OpenMAX IL组件和资源管理器之间的交互不在本规范的范围之内。
+
+If a component in the OMX_StateLoaded state fails to enter the OMX_StateIdle state because resources other than buffers are insufficient, the IL client may put the component in the OMX_StateWaitForResources state if the IL client wants to be notified when the needed resources become available. The IL client may command the component to discontinue waiting for resources by transitioning it from the OMX_StateWaitForResources state to the OMX_StateLoaded state. If a component in the OMX_StateWaitForResources state acquires all the resources upon which it is waiting, it shall initiate a transition to the OMX_StateIdle state.
+如果处于OMX_StateLoaded状态的组件由于缓冲区之外的资源不足而无法进入OMX_StateIdle状态，如果IL客户端希望在需要的资源可用时收到通知，那么IL客户端可能会将组件置于OMX_StateWaitForResources状态。IL客户端可以通过将组件从OMX_StateWaitForResources状态转换到OMX_StateLoaded状态来命令组件停止等待资源。 如果OMX_StateWaitForResources状态中的某个组件获取了它正在等待的所有资源，它将启动转换到OMX_StateIdle状态。
+
+
+3.1.1.2.5.1 OMX_StateWaitForResources to OMX_StateIdle
+
+When a component initiates a transition from the OMX_StateWaitForResources state to the OMX_StateIdle state, it shall communicate the initiation of this transition to the IL client via an OMX_EventResourcesAcquired event. When the IL client receives the OMX_EventResourcesAcquired event, it shall call OMX_UseBuffer and OMX_AllocateBuffer in the manner of a transition from OMX_StateLoaded to OMX_StateIdle. Likewise, the component cannot complete its transition to OMX_StateIdle until it acquires all of its static resources, including buffers.
+当组件启动从OMX_StateWaitForResources状态到OMX_StateIdle状态的转换时，它应通过OMX_EventResourcesAcquired事件将此转换告诉给IL客户端。当IL客户端收到OMX_EventResourcesAcquired事件时，它将以从OMX_StateLoaded过渡到OMX_StateIdle的方式调用OMX_UseBuffer和OMX_AllocateBuffer。同样，组件在获取其所有静态资源（包括缓冲区）之前，无法完成向OMX_StateIdle的转换。
+
+3.1.1.2.6 OMX_StateInvalid
+
+In this state, the component has suffered internal corruption or an error from which it cannot recover. When it detects such a condition, the component transitions itself to OMX_StateInvalid and informs the IL client by generating an OMX_EventError event with the value OMX_ErrorInvalidState. When the IL client receives OMX_EventError indicating a transition to OMX_StateInvalid, it shall free all resources associated with that component and eventually call OMX_FreeHandle to release the handle associated with the component.
+在此状态下，组件遭受内部损坏或无法恢复的错误。 当它检测到这种情况时，组件会自行转换为OMX_StateInvalid，并通过生成OMX_ErrorInvalidState的OMX_EventError事件来通知IL客户端。 当IL客户端收到OMX_EventError指示转换到OMX_StateInvalid时，它应释放与该组件关联的所有资源，并最终调用OMX_FreeHandle释放与该组件关联的句柄。
+
+A component in the OMX_StateInvalid state shall fail every call made upon it and return an OMX_ErrorInvalidState error message except for OMX_GetState, OMX_FreeBuffer, or OMX_ComponentDeinit. The IL client may also command a transition to the OMX_StateInvalid state explicitly via OMX_SendCommand. A component may transition between any state and the OMX_StateInvalid state.
+处于OMX_StateInvalid状态的组件应该对其进行的每次调用都失败，并返回除OMX_GetState，OMX_FreeBuffer或OMX_ComponentDeinit之外的OMX_ErrorInvalidState错误消息。IL客户端也可以通过发送OMX_SendCommand明确地将组件转换到OMX_StateInvalid状态，组件可以在任何状态和OMX_StateInvalid状态之间转换。
+
+
+
+
+
+
+
+
+
+
+
+
+3.1.1.3 OMX_ERRORTYPE
+
+The OMX_ERRORTYPE enumeration shown in Table 3-4 defines the standard OpenMAX IL errors that all functions defined in the OpenMAX IL API return. These errors should cover most of the common failure cases. However, vendors are free to add additional error messages of their own as long as they follow these rules:
+• Vendor error messages shall be in the range of 0x90000000 to 0x9000FFFF.
+• Vendor error messages shall be defined in a header file provided with the component. No error messages are allowed that are not defined.
+
+Table 3-4: OpenMAX IL Error Codes
+
+
+Field Name
+Description
+OMX_ErrorNone
+The function returned successfully.
+OMX_ErrorInsufficientResources
+There were insufficient resources to perform the requested operation.
+OMX_ErrorUndefined
+There was an error but the cause of the error could not be determined.
+OMX_ErrorInvalidComponentName
+The component name string was invalid.
+OMX_ErrorComponentNotFound
+No component with the specified name string was found.
+OMX_ErrorInvalidComponent
+The component specified did not have a OMX_ComponentInit entry point, or the component did not correctly complete the OMX_ComponentInit call
+OMX_ErrorBadParameter
+One or more parameters were invalid.
+OMX_ErrorNotImplemented
+The requested function is not implemented.
+OMX_ErrorUnderflow
+The buffer was emptied before the next buffer was ready.
+OMX_ErrorOverflow
+The buffer was not available when it was needed.
+OMX_ErrorHardware
+The hardware failed to respond as expected.
+OMX_ErrorInvalidState
+The component is in the OMX_StateInvalid state.
+OMX_ErrorStreamCorrupt
+The stream is found to be corrupt. OMX IL components processing coded data (typically decoders) may have the ability to detect corruption in the data stream. Also they may have the ability to detect missing frames and perform error concealment. Such components should report these errors to the client using this error code on a frame basis. Note that the components will in most cases continue normal operation.
+OMX_ErrorPortsNotCompatible
+Ports being set up for tunneled communication are incompatible.
+OMX_ErrorResourcesLost
+Resources allocated to a component in the OMX_StateIdle state have been lost, which has resulted in the component returning to the OMX_StateLoaded state.
+OMX_ErrorNoMore
+No more indices can be enumerated.
+OMX_ErrorVersionMismatch
+The component detected a version mismatch.
+OMX_ErrorNotReady
+The component is not ready to return data at this time.
+OMX_ErrorTimeout
+A timeout occurred where the component was unable to process the call in a reasonable amount of time. This could be due to an infinite loop, or busy hardware.
+OMX_ErrorSameState
+The component tried to transition into the state that it is currently in.
+OMX_ErrorResourcesPreempted
+Resources allocated to a component in the OMX_StateExecuting or OMX_StatePause states have been pre-empted, causing the component to return to the OMX_StateIdle state.
+OMX_ErrorPortUnresponsive DuringAllocation
+The non-supplier port deemed that it had waited an unusually long time for the supplier port to send it an allocated buffer via an OMX_UseBuffer call. A non-supplier port sends this error to the IL client via the EventHandler callback during the allocation of buffers on a transition from the LOADED to the IDLE state or on a port enable.
+OMX_ErrorPortUnresponsive DuringDeallocation
+The non-supplier port deemed that it had waited an unusually long time for the supplier port to request the de-allocation of a buffer header via a OMX_FreeBuffer call. A non-supplier port sends this error to the IL client via the EventHandler callback during the de-allocation of buffers on a transition from the IDLE to LOADED state or on a port disablement.
+OMX_ErrorPortUnresponsiveDuringStop
+The supplier port deemed that it had waited an unusually long time for the non-supplier port to return a buffer via an EmptyThisBuffer or FillThisBuffer call. A supplier port sent this error to the IL client via the EventHandler callback during the disabling of a port, either on a transition from the IDLE to LOADED state or on a port disablement.
+OMX_ErrorIncorrectStateTransition
+A state transition was attempted that is not allowed.
+OMX_ErrorIncorrectStateOperation
+A command or method was attempted that is not allowed during the present state.
+OMX_ErrorUnsupportedSetting
+One or more values encapsulated in the parameter or configuration structure are unsupported.
+OMX_ErrorUnsupportedIndex
+The parameter or configuration indicated by the given index is unsupported.
+OMX_ErrorBadPortIndex
+The port index that was supplied is incorrect.
+OMX_ErrorPortUnpopulated
+The port has lost one or more of its buffers and is thus unpopulated.
+OMX_ErrorComponentSuspended
+Component suspended due to temporary loss of resources.
+OMX_ErrorDynamicResourcesUnavailable
+Component suspended due to inability to acquire dynamic resources.
+OMX_ErrorMbErrorsInFrame
+Errors detected in frame.
+OMX_ErrorFormatNotDetected
+OMX IL components performing parsing when reading input buffers or content pipes have the ability to check correct formatting of input data. Such components should report this error to the client (in the form of an OMX_EventError event passed via the EventHandler callback) when it cannot parse or determine the format of the given datastream. This reporting is performed only once in case of file parsing error. In other cases, it is performed on every data unit (e.g. frame) formatting error.
+OMX_ErrorContentPipeOpenFailed
+Opening the Content Pipe failed
+OMX_ErrorContentPipeCreationFailed
+Creating the Content Pipe failed
+OMX_ErrorSeperateTablesUsed
+Attempting to query for single Chroma table when separate quantization tables are used for the Chroma (Cb and Cr) coefficients
+OMX_ErrorTunnelingUnsupported
+Tunneling is not supported by the component
+
+3.1.1.4 OMX_EVENTTYPE
+The OMX_EVENTTYPE enumeration shown in Table 3-5 includes the event types that an OpenMAX IL component can generate. Section 3.1.2.8 describes events that the OpenMAX IL component generates and passes to the IL client by means of the callback mechanism. Events have associated parameters that are also passed in the callback.
+
+Table 3-5: OpenMAX IL Event Types
+
+Field Name
+Description
+OMX_EventCmdComplete
+Component has completed the execution of a command.
+OMX_EventError
+Component has detected an error condition.
+OMX_EventMark
+A buffer mark has reached the target component, and the IL client has received this event with the private data pointer of the mark.
+OMX_EventPortSettingsChanged
+Component has changed port settings. For example, the component has changed port settings resulting from bit stream parsing.
+OMX_EventBufferFlag
+The event that a component sends when it detects the end of a stream.
+OMX_EventResourcesAcquired
+The component has been granted resources and is transitioning from the OMX_StateWaitForResources state to the OMX_StateIdle state.
+OMX_EventComponentResumed
+The component has been resumed (i.e. no longer suspended) due to reacquisition of resources.
+OMX_EventDynamicResourcesAvailable
+The component has acquired previously unavailable dynamic resources.
+
+
+3.1.1.4.1 OMX_EventCmdComplete
+A component generates an OMX_EventCmdComplete event as soon as a command sent by the IL client has completed its execution, or a component-initiated state transition has occurred. In case of a component state change (whether initiated by the IL client or the component), the new state that the component has entered is returned as an event parameter. A component that transitions to the OMX_StateInvalid state does not generate this event.
+
+3.1.1.4.2 OMX_EventError
+A component generates the OMX_EventError event when the component detects an error condition; the type of error detected is returned as an event parameter and will use values defined in OMX_ERRORTYPE. A component shall send the following errors via OMX_EventError:
+• A component sends the OMX_ErrorInvalidState error if the component transitions to the OMX_StateInvalid state.
+• A component sends the OMX_ErrorResourcesPreempted error if the component transitions from OMX_StateExecuting or OMX_StatePause to OMX_StateIdle due to the loss of a resource.
+• A component sends the OMX_ErrorResourcesLost error if the component transitions from OMX_StateIdle to OMX_StateLoaded due to the loss of a resource.
+
+
+
+
+3.1.1.4.3 OMX_EventMark
+A component generates the OMX_EventMark event when it receives a marked buffer. When a component receives a buffer, it shall compare its own pointer to the pMarkTargetComponent field contained in the buffer. If the pointers match, then the component shall send a mark event including pMarkData as a parameter, immediately after the component has finished processing the buffer. The IL client can use the mark event to measure the propagation delay of a data buffer through a chain of components, or to notify a component that a particular buffer has reached the given destination.
+
+3.1.1.4.4 OMX_EventPortSettingsChanged
+A component generates the OMX_EventPortSettingsChanged event as soon as component port settings change. For example, a video decoder may not know a priori the output frame size and frame rate, as these parameters are coded in the input bit stream. As soon as such parameters are parsed, the component changes the values of the configuration structures of its output port and sends the OMX_EventPortSettingsChanged event to the IL client. If a settings change requires the IL client to either reallocate buffers or recycle the tunnel on the port that generated the OMX_EventPortSettingsChanged then that port shall cease transferring data until the IL client takes such action.
+
+3.1.1.4.5 OMX_EventBufferFlag
+A component generates the OMX_EventBufferFlag event when an output port emits a buffer with the OMX_BUFFERFLAG_EOS flag set in the nFlags field. The nData1 field of EventHandler specifies the value of the output port’s portindex field. The nData2 field of EventHandler specifies the unaltered nFlags field containing the end-of-stream (EOS) flag.
+
+If a component does not propagate a stream further (e.g., the component is an audio or video sink), then the component shall send an OMX_EventBufferFlag event for that stream when it has finished processing a buffer with OMX_BUFFERFLAG_EOS set. The nData1 field of EventHandler specifies the input port that received the buffer. The nData2 field of EventHandler specifies the unaltered nFlags field containing the EOS flag.
+
+
+3.1.1.4.6 OMX_EventResourcesAcquired
+A component generates the OMX_EventResourcesAcquired event when it is in the OMX_StateWaitForResources state, and the resource manager detects that the needed resources are available. When the component generates this event, it is ready to change state into the OMX_StateIdle, and it waits for all the buffers to be allocated and assigned to its ports.
+
+
+
+3.1.1.4.7 OMX_EventComponentResumed
+A suspended component generates the OMX_EventComponentResumed event when the resources it had lost have been reacquired. Upon receipt of this event the component is no longer suspended client may attempt to transition a suspended component into the executing state.
+
+3.1.1.4.8 OMX_EventDynamicResourcesAvailable
+
+A suspended component generates the OMX_EventDynamicResourcesAvailable event when some dynamic resource it was formerly unable to allocate has become available. Upon receipt of this event the component is no longer suspended and the client may attempt to transition it into the executing state.
+
+
+3.1.1.5 OMX_BUFFERSUPPLIERTYPE
+The OMX_BUFFERSUPPLIERTYPE enumerative type shown in Table 3-6 specifies the port in the tunnel that is the supplier port. A buffer supplier port either may allocate its buffers or reuse buffers provided by another port within the same component.
+
+Table 3-6: OpenMAX IL Buffer Supplier Type For Tunnel Setup
+
+Field Name
+Description
+OMX_BufferSupplyUnspecified
+The port supplying the buffers is unspecified, or no supplier is preferred.
+OMX_BufferSupplyInput
+The input port supplies the buffers.
+OMX_BufferSupplyOutput
+The output port supplies the buffer.
+
+3.1.2 Structures
+
+This section discusses the data structures defined in the OpenMAX IL core. The first two fields of each OpenMAX IL data structure denote the size, nSize, of the structure and the version of type OMX_VERSIONTYPE, nVersion, which is defined in section 3.1.2.4. The entity that allocates an OpenMAX IL structure is responsible for filling in these two values. Hereinafter, definitions for these two common fields are omitted in individual structure definitions.
+
+
+
+3.1.2.1 OMX_COMPONENTREGISTERTYPE
+The OMX_COMPONENTREGISTERTYPE structure is used in the case of static linking of components to the core. The core optionally uses it to load the component and run the specific component initialization functifons.
+
+OMX_COMPONENTREGISTERTYPE is defined as follows.
+
+
+

@@ -53,7 +53,7 @@ hooks - 钩子
 
 encoded bitstream - 码流（编码比特流）
 Endianness - 字节序
-
+supplier - 供应者
 
 
 
